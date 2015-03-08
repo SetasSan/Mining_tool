@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-F:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\
 DatabaseAnalizer
 none
 false
 TRACE
-F:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\App.xaml
-11151548125
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\App.xaml
+2-842416935
 
-162036145183
-202038476987
-MainWindow.xaml;
+23-859543577
+20262060829
+Views\DBSettingsWindow.xaml;Views\MainWindow.xaml;
 
 False
 

@@ -1,0 +1,53 @@
+﻿<Window x:Class="DatabaseAnalizer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="812" Width="1331.625">
+
+    <Grid>
+        <Menu  Height="26" Name="meniu1" VerticalAlignment="Top" Margin="0,0,10,0" >
+            <MenuItem Header="_File" Name="menuFile">
+                <MenuItem Header="Select DB" Click="Select_DB_Click">
+                </MenuItem>
+                <MenuItem Header="Exit" Click="Exit_click">
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_View"/>
+            <MenuItem Header="_About"/>
+            <WrapPanel Height="100" Width="100"/>
+        </Menu>
+        <TextBox Name="data_displayer" Margin="169,0,332,40" TextWrapping="Wrap" Text="" Height="170" VerticalAlignment="Bottom" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+
+
+        <ToolBar Height="28" Margin="0,31,10,0" VerticalAlignment="Top">
+            <Label Width="70" Focusable="false" IsEnabled="False">Select DB :</Label>
+            <ComboBox Name="Databases_list" Height="23" Margin="0" VerticalAlignment="Top" Width="120" SelectionChanged="Databases_list_SelectionChanged">
+
+            </ComboBox>
+        </ToolBar>
+        <ScrollViewer Margin="10,64,0,45" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Width="154">
+            <StackPanel Name="ButtonsPanel"  HorizontalAlignment="Left" Width="133"/>
+        </ScrollViewer>
+        <TabControl x:Name="tab_main" Margin="169,64,332,215">
+            <TabItem x:Name="tab_table_data" Header="Table data">
+                <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
+                    <DataGrid Name="Table_data" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="TabItem">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
+        <TabControl Margin="0,86,10,40" HorizontalAlignment="Right" Width="317">
+            <TabItem Header="Table parametres">
+                <Grid Background="#FFE5E5E5" HorizontalAlignment="Right" Width="300">
+                    <DataGrid Name="Table_parametres" Margin="-14,0,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Right" Width="314"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Table settings">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
+
+    </Grid>
+</Window>
+
