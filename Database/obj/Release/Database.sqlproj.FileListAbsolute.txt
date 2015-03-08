@@ -1,9 +1,0 @@
-F:\VisualStudioProjects\DatabaseAnalizer\Database\bin\Release\Database.dacpac
-F:\VisualStudioProjects\DatabaseAnalizer\Database\bin\Release\Database.dll
-F:\VisualStudioProjects\DatabaseAnalizer\Database\bin\Release\Database.pdb
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\Model.xml
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\refactor.xml
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\postdeploy.sql
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\predeploy.sql
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\Database.dll
-F:\VisualStudioProjects\DatabaseAnalizer\Database\obj\Release\Database.pdb
