@@ -23,7 +23,7 @@ namespace DatabaseAnalizer.Controllers
             AddServer();
             _mainWindow = new MainWindow(this);
             _settingsWindow = new DBSettingsWindow(this);
-            Init();
+            SetUpWindows();
         }
 
         private void AddServer()
@@ -32,7 +32,7 @@ namespace DatabaseAnalizer.Controllers
             _servers.Add(mySqlServer);
         }
 
-        private void Init()
+        private void SetUpWindows()
         {
             _mainWindow.Visibility = System.Windows.Visibility.Hidden;
             _settingsWindow.Visibility = System.Windows.Visibility.Visible;
