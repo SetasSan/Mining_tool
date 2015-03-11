@@ -20,11 +20,16 @@ namespace DatabaseAnalizer.Controllers
         public Controller()
         {
             _servers = new List<IServer>();
-            IServer mySqlServer = new MySqlServer("MySql");
-            _servers.Add(mySqlServer);
+            AddServer();
             _mainWindow = new MainWindow(this);
             _settingsWindow = new DBSettingsWindow(this);
             Init();
+        }
+
+        private void AddServer()
+        {
+            IServer mySqlServer = new MySqlServer("MySql");
+            _servers.Add(mySqlServer);
         }
 
         private void Init()
