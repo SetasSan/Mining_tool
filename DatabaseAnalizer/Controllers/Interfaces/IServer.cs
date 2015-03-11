@@ -16,7 +16,7 @@ namespace DatabaseAnalizer.Controllers.Interfaces
         void SetUserName(string userName);
         void SetUserPassword(string userPassword);
         void SetServerAddress(string serverAddress);
-        List<Database> GetDatabases();
+        List<Database> GetDatabases(); 
         
     }
 }

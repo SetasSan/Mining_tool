@@ -4,6 +4,8 @@ using DatabaseAnalizer.Models;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,6 +42,7 @@ namespace DatabaseAnalizer.Controllers.Databases
             _databases = ExtractDatabases();
             ExtractTablesForDbs();
             ExtractColumnNameAndType();
+            ExtractTablesData();
         }
 
 
@@ -99,7 +102,7 @@ namespace DatabaseAnalizer.Controllers.Databases
          /// <param name="dbName"></param>
          /// <param name="tableName"></param>
          /// <returns></returns>
-        public void ExtractColumnNameAndType()
+        private void ExtractColumnNameAndType()
         {
 
             foreach (var db in _databases)
@@ -108,8 +111,7 @@ namespace DatabaseAnalizer.Controllers.Databases
                 {
                     List<Column> columns = new List<Column>();
                     _connection.Open();
-                    MySqlCommand command = _connection.CreateCommand();
-                    //TODO: perkelti i DBcommanderi
+                    MySqlCommand command = _connection.CreateCommand();                    
                     command.CommandText = "select COLUMN_NAME, COLUMN_TYPE from information_schema.COLUMNS WHERE TABLE_NAME= '" + table.name + "' AND TABLE_SCHEMA='" + db.GetDBName() + "'";
                     MySqlDataReader tabs = command.ExecuteReader();
                     while (tabs.Read())
@@ -122,6 +124,59 @@ namespace DatabaseAnalizer.Controllers.Databases
                 }
             }
             
+        }
+
+        private void ExtractTablesData()
+        {
+            foreach (var db in _databases)
+            {
+                foreach (var table in db.GetTables())
+                {
+                    foreach(var column in table.columns){
+                  
+                    List<string> cellsData = new List<string>();
+                    _connection.Open();
+                    MySqlCommand command = _connection.CreateCommand();
+                    command.CommandText = "USE " + db.GetDBName() + "; select " + convertKey(column.name) + " from " + table.name;
+                    MySqlDataReader cells = command.ExecuteReader();
+              
+                    foreach (var c in cells)
+                    {
+                        cellsData.Add(((DbDataRecord)c).GetValue(0).ToString());
+                    }
+                    _connection.Close();
+                    column.cellsData = cellsData;
+                    }                
+
+                }
+            }
+
+        }
+
+        private string convertKey(string a)
+        {
+            string re = "";
+            switch (a)
+            {
+                case "table":
+                    {
+                        re = "'table'";
+                        break;
+                    }
+                case "KEY":
+                    {
+                        re = "'KEY'";
+                        break;
+                    }
+                default:
+                    {
+                        re = a;
+                        break;
+                    }
+
+
+            }
+            return re;
         }
 
 

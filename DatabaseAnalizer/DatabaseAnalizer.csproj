@@ -115,10 +115,7 @@
     <Compile Include="Views\DBSettingsWindow.xaml.cs">
       <DependentUpon>DBSettingsWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Helper\SqlCommandGenerator.cs" />
-    <Compile Include="Helper\LogPrinter.cs" />
     <Compile Include="Helper\MysqlDBGeneratorFromBackup.cs" />
-    <Compile Include="Helper\TablesInDBExtracter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

@@ -20,7 +20,7 @@ namespace DatabaseAnalizer.Controllers
         public Controller()
         {
             _servers = new List<IServer>();
-            MySqlServer mySqlServer = new MySqlServer("MySql");
+            IServer mySqlServer = new MySqlServer("MySql");
             _servers.Add(mySqlServer);
             _mainWindow = new MainWindow(this);
             _settingsWindow = new DBSettingsWindow(this);
@@ -84,7 +84,9 @@ namespace DatabaseAnalizer.Controllers
 
         public void HandleTableButtonClick(Table table)
         {
+            _mainWindow.PrintLog("Selected table - "+table.name);
             _mainWindow.ShowTableParametres(table);
+            _mainWindow.FillDataTable(table);
         }
 
 

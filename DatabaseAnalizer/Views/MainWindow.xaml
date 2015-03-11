@@ -6,7 +6,7 @@
     <Grid>
         <Menu  Height="26" Name="meniu1" VerticalAlignment="Top" Margin="0,0,10,0" >
             <MenuItem Header="_File" Name="menuFile">
-                <MenuItem Header="Select DB" Click="Select_DB_Click">
+                <MenuItem Header="Select DB">
                 </MenuItem>
                 <MenuItem Header="Exit" Click="Exit_click">
                 </MenuItem>
@@ -30,7 +30,7 @@
         <TabControl x:Name="tab_main" Margin="169,64,332,215">
             <TabItem x:Name="tab_table_data" Header="Table data">
                 <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
-                    <DataGrid Name="Table_data" />
+                    <DataGrid Name="table_data" />
                 </Grid>
             </TabItem>
             <TabItem Header="TabItem">

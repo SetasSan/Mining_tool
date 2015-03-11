@@ -29,26 +29,17 @@ namespace DatabaseAnalizer
     public partial class MainWindow : Window
     {
 
-        public LogPrinter loger;
+        
         private Controller _controller;
-
         private Analizer _analizer;
         public MainWindow(Controller controller)
         {
             InitializeComponent();
             _controller = controller;
-            CreatePatametersTable();
-            //    this.Visibility = System.Windows.Visibility.Hidden;
-
-            //    tables = new Dictionary<string, DatabaseAnalizer.Models.Table>();
-            //    connection = new MySqlConnection(ConfigurationSettings.AppSettings["MySqlConnectionString"]);
-            //    mysqlModel = new MySqlDbDataModel();            
-               
-            //    RefreshDatabaseList();
-            //    tide = new TablesInDBExtracter(connection, ref mysqlModel, ref loger, Table_data, ref tables); 
+            CreateParametersTable();          
         }
 
-        private void CreatePatametersTable()
+        private void CreateParametersTable()
         {
             var nameC = new DataGridTextColumn();           
             nameC.Header = "Name";
@@ -68,56 +59,20 @@ namespace DatabaseAnalizer
             this.Visibility = System.Windows.Visibility.Visible;
         }
 
-        private void Select_DB_Click(object sender, RoutedEventArgs e)
-        {
-            //OpenFileDialog ofd = new OpenFileDialog();
-            //ofd.ShowDialog();
-            //if ((ofd.OpenFile()) != null)//TODO: here i get error
-            //{
-            //    mysqlModel.dbBackupPath = ofd.FileName;
-            //    string dbName;
-            //    new MysqlDBGeneratorFromBackup(connection, mysqlModel).createDbFormBackup(out dbName);
-            //    mysqlModel.dbName = dbName;
-            //    tide.generateTableButtuns(ButtonsPanel, Table_parametres);                                    
-            //}            
-        }
-
+      
         private void Exit_click(object sender, RoutedEventArgs e)
         {
             this.Close();
         }
 
-
-
-
-        public void RefreshDatabaseList()
-        {
-            //Databases_list.Items.Clear();
-            //Databases_list.Items.Add("Select");
-            //Databases_list.SelectedIndex = 0;
-
-            //foreach (string db in (new SqlCommandGenerator(connection)).getStringList("select SCHEMA_NAME from information_schema.SCHEMATA"))
-            //{
-            //    Databases_list.Items.Add(db);
-            //}
-
-        }
-
+        
 
         private void Databases_list_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ComboBox comboBox = (ComboBox)sender;
-            _controller.HandleDBChange((string)comboBox.SelectedValue);
-            //if (comboBox.SelectedIndex!=0)
-            //{               
-            //    string selectedDb = (string)comboBox.SelectedItem;               
-            //    mysqlModel.dbName = selectedDb;               
-            //    tide.generateTableButtuns(ButtonsPanel, Table_parametres);
-            //    loger.printLog("db selected - " + selectedDb);                
-            //    tide.getTablesStructure();
-            //}
-
+            _controller.HandleDBChange((string)comboBox.SelectedValue);         
         }
+
 
         public void FillButtons(List<Models.Table> tables)
         {
@@ -156,49 +111,39 @@ namespace DatabaseAnalizer
             public string Type {set;get;}
         }
 
-        public void fillDataTable(Models.Table table)
+        public void FillDataTable(Models.Table table)
         {
-            //DataGrid tableData = new DataGrid();
-            //DataTable dt = new DataTable();
-            //int o = 0;
+            table_data.Columns.Clear();            
+            DataTable dt = new DataTable();           
+            
+            foreach(Column col in table.columns)
+            {
+                DataColumn dc = new DataColumn(col.name.Replace("_", "__"), typeof(string));
+                dt.Columns.Add(dc);
+            }
 
+            for (int i = 0; i < table.columns.ElementAt(0).cellsData.Count(); i++)
+            {
+                    DataRow dr = dt.NewRow();
+                    int e = 0;
+                    foreach (object l in table.columns)
+                    {
+                        dr[e] = table.columns.ElementAt(e).cellsData.ElementAt(i).ToString();      
+                        e++;
+                    }
+                    dt.Rows.Add(dr);
+            }
 
-            //List<List<object>> listas = new List<List<object>>();
+            DataView dw = new DataView(dt);
+            table_data.ItemsSource = dw;
+            PrintLog("filled table - "+table.name);
+            
+        }
 
-
-            //foreach(string s in table.columns.Select(n=>n.name).ToList())
-            //{
-            //    DataColumn dc = new DataColumn(s, typeof(string));
-            //    dt.Columns.Add(dc);
-            //    o++;
-
-            //    List<object> l = new List<object>();
-            //    foreach (object obj in kk.Value)
-            //    {                  
-            //        l.Add(obj);
-            //    }
-            //    listas.Add(l);
-
-            //}
-
-            //for (int i = 0; i < ((List<object>)listas.ElementAt(0)).Count; i++)
-            //{
-            //    DataRow dr = dt.NewRow();
-            //    int e = 0;
-            //    foreach (object l in listas)
-            //    {
-            //        dr[e] = ((List<object>)listas.ElementAt(e)).ElementAt(i).ToString();
-            //        //dr[e] = "takas";
-            //        e++;
-            //    }
-            //    dt.Rows.Add(dr);
-            //}
-
-            //DataView dw = new DataView(dt);
-            //tableData.ItemsSource = dw;
-
-
-
+        public void PrintLog(String log)
+        {
+            data_displayer.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " " + log + "\r\n");
+            data_displayer.ScrollToEnd();
         }
 
     }
