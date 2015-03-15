@@ -30,8 +30,7 @@ namespace DatabaseAnalizer
     {
 
         
-        private Controller _controller;
-        private Analizer _analizer;
+        private Controller _controller;       
         public MainWindow(Controller controller)
         {
             InitializeComponent();
@@ -73,7 +72,10 @@ namespace DatabaseAnalizer
             _controller.HandleDBChange((string)comboBox.SelectedValue);         
         }
 
-
+        /// <summary>
+        /// fill view with buttons of table by selected db
+        /// </summary>
+        /// <param name="tables"></param>
         public void FillButtons(List<Models.Table> tables)
         {
             List<Button> buttons = new List<Button>();
@@ -82,8 +84,8 @@ namespace DatabaseAnalizer
             {
                 Button newButton = new Button();
                 newButton.Click += (s, e) => { _controller.HandleTableButtonClick(table); };
-                newButton.Name = table.name + "_btn";
-                newButton.Content = table.name;
+                newButton.Name = table.Name + "_btn";
+                newButton.Content = table.Name;
                 newButton.Height = 50;
                 ButtonsPanel.Children.Add(newButton);
             }
@@ -95,13 +97,13 @@ namespace DatabaseAnalizer
         /// </summary>
         /// <param name="Table_parametres"></param>
         /// <param name="line"></param>
-        public void ShowTableParametres(Models.Table tables)
+        public void ShowTableParametres(Models.Table table)
         {
 
             Table_parametres.Items.Clear();
-            foreach (var param in tables.columns)
+            foreach (var param in table.Columns)
             {
-                Table_parametres.Items.Add(new Parameter(){Name=param.name, Type=param.type});
+                Table_parametres.Items.Add(new Parameter(){Name=param.Name, Type=param.Type});
             }           
           
         }
@@ -116,19 +118,19 @@ namespace DatabaseAnalizer
             table_data.Columns.Clear();            
             DataTable dt = new DataTable();           
             
-            foreach(Column col in table.columns)
+            foreach(Column col in table.Columns)
             {
-                DataColumn dc = new DataColumn(col.name.Replace("_", "__"), typeof(string));
+                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
                 dt.Columns.Add(dc);
             }
 
-            for (int i = 0; i < table.columns.ElementAt(0).cellsData.Count(); i++)
+            for (int i = 0; i < table.Columns.ElementAt(0).CellsData.Count(); i++)
             {
                     DataRow dr = dt.NewRow();
                     int e = 0;
-                    foreach (object l in table.columns)
+                    foreach (object l in table.Columns)
                     {
-                        dr[e] = table.columns.ElementAt(e).cellsData.ElementAt(i).ToString();      
+                        dr[e] = table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();      
                         e++;
                     }
                     dt.Rows.Add(dr);
@@ -136,7 +138,7 @@ namespace DatabaseAnalizer
 
             DataView dw = new DataView(dt);
             table_data.ItemsSource = dw;
-            PrintLog("filled table - "+table.name);
+            PrintLog("filled table - "+table.Name);
             
         }
 

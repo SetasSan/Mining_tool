@@ -33,7 +33,7 @@ namespace DatabaseAnalizer.Controllers.Databases
         
         public string GetServerName()
         {
-            return _name;
+            return Name;
         }
          
         public void Extract()
@@ -41,7 +41,7 @@ namespace DatabaseAnalizer.Controllers.Databases
             _connection = new MySqlConnection(GetConnectionString());
             _databases = ExtractDatabases();
             ExtractTablesForDbs();
-            ExtractColumnNameAndType();
+            ExtractColumnNameAndTypes();
             ExtractTablesData();
         }
 
@@ -56,14 +56,19 @@ namespace DatabaseAnalizer.Controllers.Databases
         {
             List<Database> databases = new List<Database>();
 
-            foreach (string dbName in GetStringList("select SCHEMA_NAME from information_schema.SCHEMATA"))
+            foreach (string dbName in ExecuteSqlCommand("select SCHEMA_NAME from information_schema.SCHEMATA"))
             {
                 databases.Add(new Database(dbName));
             }
             return databases;
         }
 
-        private List<string> GetStringList(string sCommand)
+        /// <summary>
+        /// Execute sql command and return result in List<string>
+        /// </summary>
+        /// <param name="sCommand"></param>
+        /// <returns></returns>
+        private List<string> ExecuteSqlCommand(string sCommand)
         {
             List<string> data = new List<string>();
             _connection.Open();// if there no mysql daabase here we are geting error so we can handle it with try catch
@@ -84,15 +89,19 @@ namespace DatabaseAnalizer.Controllers.Databases
         private void ExtractTablesForDbs()
         {
             foreach (var database in GetDatabases())
-            {
-                List<string> tablesNames = GetStringList("show tables from " + database.GetDBName());
+            {                
                 List<Table> tables = new List<Table>();
-                foreach (string table in tablesNames)
+                foreach (string table in GetTablesNamesForDb(database.GetDBName())
                 {
                     tables.Add(new Table(table));
                 }
                 database.SetTables(tables);
             }
+        }
+
+        private List<string> GetTablesNamesForDb(string dbName)
+        {
+            return ExecuteSqlCommand("show tables from " + dbName);
         }
 
        
@@ -102,7 +111,7 @@ namespace DatabaseAnalizer.Controllers.Databases
          /// <param name="dbName"></param>
          /// <param name="tableName"></param>
          /// <returns></returns>
-        private void ExtractColumnNameAndType()
+        private void ExtractColumnNameAndTypes()
         {
 
             foreach (var db in _databases)
@@ -112,14 +121,14 @@ namespace DatabaseAnalizer.Controllers.Databases
                     List<Column> columns = new List<Column>();
                     _connection.Open();
                     MySqlCommand command = _connection.CreateCommand();                    
-                    command.CommandText = "select COLUMN_NAME, COLUMN_TYPE from information_schema.COLUMNS WHERE TABLE_NAME= '" + table.name + "' AND TABLE_SCHEMA='" + db.GetDBName() + "'";
+                    command.CommandText = "select COLUMN_NAME, COLUMN_TYPE from information_schema.COLUMNS WHERE TABLE_NAME= '" + table.Name + "' AND TABLE_SCHEMA='" + db.GetDBName() + "'";
                     MySqlDataReader tabs = command.ExecuteReader();
                     while (tabs.Read())
                     {
                         columns.Add(new Column(tabs.GetString("COLUMN_NAME"), tabs.GetString("COLUMN_TYPE")));
                     }
                     _connection.Close();
-                    table.columns = columns;
+                    table.Columns = columns;
 
                 }
             }
@@ -132,12 +141,12 @@ namespace DatabaseAnalizer.Controllers.Databases
             {
                 foreach (var table in db.GetTables())
                 {
-                    foreach(var column in table.columns){
+                    foreach(var column in table.Columns){
                   
                     List<string> cellsData = new List<string>();
                     _connection.Open();
                     MySqlCommand command = _connection.CreateCommand();
-                    command.CommandText = "USE " + db.GetDBName() + "; select " + convertKey(column.name) + " from " + table.name;
+                    command.CommandText = "USE " + db.GetDBName() + "; select " + ConvertKey(column.Name) + " from " + table.Name;
                     MySqlDataReader cells = command.ExecuteReader();
               
                     foreach (var c in cells)
@@ -145,7 +154,7 @@ namespace DatabaseAnalizer.Controllers.Databases
                         cellsData.Add(((DbDataRecord)c).GetValue(0).ToString());
                     }
                     _connection.Close();
-                    column.cellsData = cellsData;
+                    column.CellsData = cellsData;
                     }                
 
                 }
@@ -153,7 +162,7 @@ namespace DatabaseAnalizer.Controllers.Databases
 
         }
 
-        private string convertKey(string a)
+        private string ConvertKey(string a)
         {
             string re = "";
             switch (a)

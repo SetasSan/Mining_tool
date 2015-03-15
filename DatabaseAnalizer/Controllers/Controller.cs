@@ -16,17 +16,19 @@ namespace DatabaseAnalizer.Controllers
         private DBSettingsWindow _settingsWindow;
         private List<IServer> _servers;
         private IServer _selectedServer;
+        private Analizer _analizer;
 
         public Controller()
         {
             _servers = new List<IServer>();
-            AddServer();
+            AddServers();
             _mainWindow = new MainWindow(this);
             _settingsWindow = new DBSettingsWindow(this);
             SetUpWindows();
+            _analizer = new Analizer();
         }
 
-        private void AddServer()
+        private void AddServers()
         {
             IServer mySqlServer = new MySqlServer("MySql");
             _servers.Add(mySqlServer);
@@ -89,7 +91,7 @@ namespace DatabaseAnalizer.Controllers
 
         public void HandleTableButtonClick(Table table)
         {
-            _mainWindow.PrintLog("Selected table - "+table.name);
+            _mainWindow.PrintLog("Selected table - "+table.Name);
             _mainWindow.ShowTableParametres(table);
             _mainWindow.FillDataTable(table);
         }

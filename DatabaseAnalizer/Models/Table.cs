@@ -11,9 +11,9 @@ namespace DatabaseAnalizer.Models
     {
         public Table(string name)
         {
-            this.name = name;
+            this.Name = name;
         }
-        public string name {set; get;}
-        public List<Column> columns { set; get; }
+        public string Name {set; get;}
+        public List<Column> Columns { set; get; }
     }
 }
