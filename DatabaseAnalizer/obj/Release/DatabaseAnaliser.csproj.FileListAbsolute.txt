@@ -19,3 +19,5 @@ E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAn
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csproj.GenerateResource.Cache
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.exe
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.pdb
+D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.exe
+D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.pdb
