@@ -9,11 +9,18 @@ namespace DatabaseAnalizer.Models
 {
     public class Table
     {
+        public bool IsMainTable { set; get; }
+        public string Name { set; get; }
+        public List<Column> Columns { set; get; }
+        public List<TableRelation> Relations { set; get; }
+
+        public Table()
+        {
+        }
         public Table(string name)
         {
             this.Name = name;
         }
-        public string Name {set; get;}
-        public List<Column> Columns { set; get; }
+
     }
 }
