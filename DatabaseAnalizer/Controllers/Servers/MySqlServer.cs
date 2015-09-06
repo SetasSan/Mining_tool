@@ -91,7 +91,7 @@ namespace DatabaseAnalizer.Controllers.Databases
             foreach (var database in GetDatabases())
             {                
                 List<Table> tables = new List<Table>();
-                foreach (string table in GetTablesNamesForDb(database.GetDBName())
+                foreach (string table in GetTablesNamesForDb(database.GetDBName()))
                 {
                     tables.Add(new Table(table));
                 }
