@@ -8,13 +8,13 @@ namespace DatabaseAnalizer.Models
 {
     public class Column
     {
-        public string name { set; get; }
-        public string type { set; get; }
-        public List<string> cellsData {set; get;}
+        public string Name { set; get; }
+        public string Type { set; get; }
+        public List<string> CellsData {set; get;}
         public Column(string name, string type)
         {
-            this.name = name;
-            this.type = type;
+            this.Name = name;
+            this.Type = type;
         }
     }
 }

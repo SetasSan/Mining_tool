@@ -8,10 +8,10 @@ namespace DatabaseAnalizer.Controllers.Servers
 {
     public class Server
     {
-        public string _name { private set; get; }
+        public string Name { private set; get; }
          public Server(string name)
          {
-            _name = name;
+            Name = name;
          }  
     }
 }

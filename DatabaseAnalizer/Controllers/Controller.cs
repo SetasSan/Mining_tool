@@ -7,50 +7,58 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Shapes;
 
 namespace DatabaseAnalizer.Controllers
 {
     public class Controller
     {
-        private MainWindow _mainWindow;
-        private DBSettingsWindow _settingsWindow;
-        private List<IServer> _servers;
-        private IServer _selectedServer;
+        private MainWindow mainWindow;
+        private DBSettingsWindow settingsWindow;
+        private List<IServer> servers;
+        private IServer selectedServer;
+        private Analizer analizer;
+        private List<Table> tablesForAnalize;
+    
+
 
         public Controller()
         {
-            _servers = new List<IServer>();
-            AddServer();
-            _mainWindow = new MainWindow(this);
-            _settingsWindow = new DBSettingsWindow(this);
+            servers = new List<IServer>();
+            AddServers();
+            mainWindow = new MainWindow(this);
+            settingsWindow = new DBSettingsWindow(this);
             SetUpWindows();
+            analizer = new Analizer();
+            tablesForAnalize = new List<Table>();
         }
 
-        private void AddServer()
+        private void AddServers()
         {
             IServer mySqlServer = new MySqlServer("MySql");
-            _servers.Add(mySqlServer);
+            servers.Add(mySqlServer);
         }
 
         private void SetUpWindows()
         {
-            _mainWindow.Visibility = System.Windows.Visibility.Hidden;
-            _settingsWindow.Visibility = System.Windows.Visibility.Visible;
-            _settingsWindow.Activate();
+            mainWindow.Visibility = System.Windows.Visibility.Hidden;
+            settingsWindow.Visibility = System.Windows.Visibility.Visible;
+            settingsWindow.Activate();
         }
 
         public void Connect()
         {
-            _selectedServer = _servers.Single(s => s.GetServerName() == _settingsWindow.GetSelectedServerName());
-            if (_selectedServer != null)
+            selectedServer = servers.Single(s => s.GetServerName() == settingsWindow.GetSelectedServerName());
+            if (selectedServer != null)
             {
-                _settingsWindow.Visibility = System.Windows.Visibility.Hidden;
-                _mainWindow.Visibility = System.Windows.Visibility.Visible;
-                _mainWindow.Activate();
-                _selectedServer.SetUserName(_settingsWindow.UserName.Text);
-                _selectedServer.SetUserPassword(_settingsWindow.UserPassword.Text);
-                _selectedServer.SetServerAddress(_settingsWindow.Server.Text);
-                _selectedServer.Extract();
+                settingsWindow.Visibility = System.Windows.Visibility.Hidden;
+                mainWindow.Visibility = System.Windows.Visibility.Visible;
+                mainWindow.Activate();
+                selectedServer.SetUserName(settingsWindow.UserName.Text);
+                selectedServer.SetUserPassword(settingsWindow.UserPassword.Text);
+                selectedServer.SetServerAddress(settingsWindow.Server.Text);
+                selectedServer.Extract();
                 FillDbDropDownBox();
 
             }
@@ -63,19 +71,16 @@ namespace DatabaseAnalizer.Controllers
 
         public string[] GetDatabasesNames()
         {
-            return _servers.Select(n => n.GetServerName()).ToArray();
+            return servers.Select(n => n.GetServerName()).ToArray();
         }
 
         private void FillDbDropDownBox()
         {
-            foreach (var database in _selectedServer.GetDatabases())
+            foreach (var database in selectedServer.GetDatabases())
             {
-                _mainWindow.Databases_list.Items.Add(database.GetDBName());
+                mainWindow.Databases_list.Items.Add(database.GetDBName());
             }
         }
-
-       
-
 
         /// <summary>
         /// fill with buttons by db name
@@ -83,17 +88,14 @@ namespace DatabaseAnalizer.Controllers
         /// <param name="dbName"></param>
         public void HandleDBChange(string dbName)
         {
-            _mainWindow.FillButtons(_selectedServer.GetDatabases().Single(db => db.GetDBName() == dbName).GetTables());
+            mainWindow.FillButtons(selectedServer.GetDatabases().Single(db => db.GetDBName() == dbName).GetTables());
         }
 
 
-        public void HandleTableButtonClick(Table table)
+
+        public void AddTableRelation(Helper.TableArrow tableArrow)
         {
-            _mainWindow.PrintLog("Selected table - "+table.name);
-            _mainWindow.ShowTableParametres(table);
-            _mainWindow.FillDataTable(table);
+           
         }
-
-
     }
 }
