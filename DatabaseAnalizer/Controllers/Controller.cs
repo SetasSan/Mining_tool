@@ -20,7 +20,7 @@ namespace DatabaseAnalizer.Controllers
         private IServer selectedServer;
         private Analizer analizer;
         private List<Table> tablesForAnalize;
-    
+
 
 
         public Controller()
@@ -95,7 +95,42 @@ namespace DatabaseAnalizer.Controllers
 
         public void AddTableRelation(Helper.TableArrow tableArrow)
         {
-           
+            foreach (var table in this.tablesForAnalize)
+            {
+                if (table.Name == tableArrow.endMovableElement.Name)
+                {
+                    TableRelation relation = new TableRelation()
+                    {
+                        ForeignTable = tableArrow.startTable,
+                    };
+                    relation.RelationFromTo.Add(new TableRelation.RelationBeetweenTable
+                    {
+                        ForeignKey = tableArrow.startColumn,
+                        PrimaryKey = tableArrow.endColumn
+                    });
+                    table.Relations.Add(relation);
+                }
+            }
+        }
+
+        internal void AddTable(Table dragingTable)
+        {
+            this.tablesForAnalize.Add(dragingTable);
+        }
+
+        internal void SetMainTable(Table table)
+        {
+            foreach (var tab in this.tablesForAnalize)
+            {
+                tab.IsMainTable = false;
+                if (tab.Name == table.Name)
+                    tab.IsMainTable = true;
+            }
+        }
+
+        internal void AnalizeData()
+        {
+            this.mainWindow.FillGeneratedDataTable(analizer.Analize(tablesForAnalize));
         }
     }
 }

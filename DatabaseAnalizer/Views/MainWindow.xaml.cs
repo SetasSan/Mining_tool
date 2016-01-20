@@ -140,6 +140,16 @@ namespace DatabaseAnalizer
 
         public void FillDataTable(Models.Table table)
         {
+            FillDataTable(table, table_data);
+        }
+
+        public void FillGeneratedDataTable(Models.Table table)
+        {
+            FillDataTable(table, geberated_table_data);
+        }
+
+        private void FillDataTable(Models.Table table, DataGrid grid)
+        {
             table_data.Columns.Clear();
             DataTable dt = new DataTable();
 
@@ -162,7 +172,7 @@ namespace DatabaseAnalizer
             }
 
             DataView dw = new DataView(dt);
-            table_data.ItemsSource = dw;
+            grid.ItemsSource = dw;
             PrintLog("filled table - " + table.Name);
 
         }
@@ -224,11 +234,24 @@ namespace DatabaseAnalizer
             //table header
             Label header = new Label()
             {
+                Name = dragingTable.Name,
                 Content = dragingTable.Name.Replace("_", "__"),
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Gray.A, System.Drawing.Color.Gray.R, System.Drawing.Color.Gray.G, System.Drawing.Color.Gray.B)),
                 Width = charcount * charsize - charsize
             };
 
+            ContextMenu tableHeaderMeniu = new System.Windows.Controls.ContextMenu();
+            MenuItem makeMainTable = new MenuItem()
+            {
+                 Header = "Make this table main",                 
+            };
+            DatabaseAnalizer.Models.Table tempTable = new DatabaseAnalizer.Models.Table();
+            tempTable = dragingTable;
+
+            makeMainTable.PreviewMouseLeftButtonDown += (s, er) => { makeMainTable_PreviewMouseLeftButtonDown(tempTable, header); };
+
+            tableHeaderMeniu.Items.Add(makeMainTable);
+            header.ContextMenu = tableHeaderMeniu;
             mainItem.Name = dragingTable.Name;
 
             mainItem.Items.Add(header);
@@ -243,6 +266,30 @@ namespace DatabaseAnalizer
             canvas.Children.Add(mainItem);
            
             PrintLog("dragging droping  - " + sender.ToString() + " " + e.ToString());
+        }
+
+        private void makeMainTable_PreviewMouseLeftButtonDown(DatabaseAnalizer.Models.Table table, Label sender)
+        {
+            ListBox lb = sender.Parent as ListBox;
+            Canvas mainCanvas = lb.Parent as Canvas;
+            foreach (var canItem in mainCanvas.Children)
+            {
+                if (canItem.GetType() == typeof(ListBox))
+                {
+                    ListBox lbInCanvas = canItem as ListBox;
+                    foreach (var lbItem in lbInCanvas.Items)
+                    {
+                        if (lbItem.GetType() == typeof(Label))
+                        {
+                            Label labelInTable = lbItem as Label;
+                            labelInTable.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Gray.A, System.Drawing.Color.Gray.R, System.Drawing.Color.Gray.G, System.Drawing.Color.Gray.B));
+                        }
+                    }
+                }
+            }
+
+            sender.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Green.A, System.Drawing.Color.Green.R, System.Drawing.Color.Green.G, System.Drawing.Color.Green.B));
+            _controller.SetMainTable(table);
         }
 
         private void canvas_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -413,6 +460,11 @@ namespace DatabaseAnalizer
                 }
 
             }
+        }
+
+        private void Generate_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _controller.AnalizeData();
         }
     }
 }
