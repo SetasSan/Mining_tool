@@ -19,9 +19,10 @@ namespace DatabaseAnalizer.Models.Process.Attributes
             Type = type;
         }
 
-        public string GetAttributeInXES()
+        override
+        public string ToString()
         {
-            return "<"+Type+" key="+Key+" value="+Value+" / >";
+            return "<"+Type+" key=\""+Key+"\" value=\""+Value+"\" />";
         }
     }
 }

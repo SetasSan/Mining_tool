@@ -9,12 +9,13 @@ namespace DatabaseAnalizer.Models
     public class Column
     {
         public string Name { set; get; }
-        public string Type { set; get; }
-        public List<string> CellsData {set; get;}
+        public string Type { set; get; }        
+        public Dictionary<int, string> CellsData {set; get;}
         public Column(string name, string type)
         {
             this.Name = name;
             this.Type = type;
+            this.CellsData = new Dictionary<int, string>();
         }
     }
 }

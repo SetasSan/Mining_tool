@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Data;
 using System.IO;
@@ -39,7 +40,7 @@ namespace DatabaseAnalizer
         private bool isDrawingLine = false;
         private TableArrow currentTableArrow;
         private List<TableArrow> tableArrows = new List<TableArrow>();
-
+        private List<ComboBoxValues> ColumnNames { set; get; }
 
         public MainWindow(Controller controller)
         {
@@ -68,13 +69,33 @@ namespace DatabaseAnalizer
             this.Visibility = System.Windows.Visibility.Visible;
         }
 
-
         private void Exit_click(object sender, RoutedEventArgs e)
         {
             this.Close();
         }
 
-
+        private void ExportLogFile_click(object sender, RoutedEventArgs e)
+        {
+            string result = _controller.getXESString();
+            if (result != "")
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "XES file|*.xes";
+                saveFileDialog.Title = "Save an XES file";                
+                saveFileDialog.FileName = _controller.SelectedDb + DateTime.Now.ToString("yyyy-mm-dd-HH-mm-ss") + ".xes";
+                if (saveFileDialog.ShowDialog()==true)
+                {
+                    StreamWriter writer = new StreamWriter(saveFileDialog.OpenFile());
+                    writer.WriteLine(_controller.getXESString());
+                    writer.Dispose();
+                    writer.Close();
+                }
+            }
+            else
+            {
+                PrintLog("XES log not formated");
+            }
+        }
 
         private void Databases_list_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -92,7 +113,7 @@ namespace DatabaseAnalizer
             ButtonsPanel.Children.Clear();
             foreach (Models.Table table in tables)
             {
-                Button newButton = new Button();              
+                Button newButton = new Button();
                 newButton.PreviewMouseDown += (s, e) => { HandleMouseDown(table); };
                 newButton.PreviewMouseDown += newButton_MouseDown;
                 newButton.Name = table.Name + "_btn";
@@ -112,10 +133,6 @@ namespace DatabaseAnalizer
         }
 
 
-
-
-
-
         /// <summary>
         /// handle each button click (table button)
         /// </summary>
@@ -123,13 +140,11 @@ namespace DatabaseAnalizer
         /// <param name="line"></param>
         public void ShowTableParametres(Models.Table table)
         {
-
             Table_parametres.Items.Clear();
             foreach (var param in table.Columns)
             {
                 Table_parametres.Items.Add(new Parameter() { Name = param.Name, Type = param.Type });
             }
-
         }
 
         private class Parameter
@@ -137,8 +152,23 @@ namespace DatabaseAnalizer
             public string Name { set; get; }
             public string Type { set; get; }
         }
+        private class ParameterForSettings
+        {
+            public string Name { set; get; }
+            public DataGridComboBoxColumn Type { set; get; }
+        }
 
         public void FillDataTable(Models.Table table)
+        {
+            FillDataTable(table, table_data);
+        }
+
+        public void FillGeneratedDataTable(Models.AnalizedTable table)
+        {
+            FillDataTable(table, geberated_table_data);
+        }
+
+        private void FillDataTable(Models.Table table, DataGrid grid)
         {
             table_data.Columns.Clear();
             DataTable dt = new DataTable();
@@ -162,9 +192,49 @@ namespace DatabaseAnalizer
             }
 
             DataView dw = new DataView(dt);
-            table_data.ItemsSource = dw;
+            grid.ItemsSource = dw;
             PrintLog("filled table - " + table.Name);
 
+        }
+
+        private void FillDataTable(Models.AnalizedTable analizetable, DataGrid grid)
+        {
+            table_data.Columns.Clear();
+            DataTable dt = new DataTable();
+
+            //foreach (var header in analizetable.Header)
+            //{
+            //    DataColumn dc = new DataColumn(header.Key);               
+            //    dt.Columns.Add(dc);
+            //    for (int i = 0; i < header.Value - 1; i++ )
+            //        dt.Columns.Add(new DataColumn());
+            //}
+
+            foreach (Column col in analizetable.table.Columns)
+            {
+                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
+                dt.Columns.Add(dc);
+            }
+
+            if (analizetable.table.Columns.ElementAt(0).CellsData != null)
+                for (int i = 0; i < analizetable.table.Columns.ElementAt(0).CellsData.Count(); i++)
+                {
+                    DataRow dr = dt.NewRow();
+                    int e = 0;
+                    foreach (object l in analizetable.table.Columns)
+                    {
+                        if (analizetable.table.Columns.ElementAt(e).CellsData.Count() > i)
+                            dr[e] = analizetable.table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();
+                        else
+                            dr[e] = "-";
+                        e++;
+                    }
+                    dt.Rows.Add(dr);
+                }
+
+            DataView dw = new DataView(dt);
+            grid.ItemsSource = dw;
+            PrintLog("filled table - " + analizetable.table.Name);
         }
 
         public void PrintLog(String log)
@@ -176,7 +246,7 @@ namespace DatabaseAnalizer
         private void DropHandler(object sender, DragEventArgs e)
         {
             Canvas canvas = sender as Canvas;
-
+            Models.Table currentTable = new Models.Table();
             foreach (var item in canvas.Children)
             {
                 if (item.GetType() == typeof(ListBox))
@@ -189,26 +259,28 @@ namespace DatabaseAnalizer
                 }
             }
             _controller.AddTable(dragingTable);
-           
+            currentTable = _controller.GetAllTables().Where(s => s.Name == dragingTable.Name).SingleOrDefault();
+
 
             ListBox mainItem = new ListBox();
             ListBox listBox = new ListBox();
             int charsize = 10;
-            int charcount = dragingTable.Name.Count() < 6 ? 6 : dragingTable.Name.Count();
+            int charcount = currentTable.Name.Count() < 6 ? 6 : currentTable.Name.Count();
 
             //calculate labels width
-            foreach (var col in dragingTable.Columns)
+            foreach (var col in currentTable.Columns)
             {
                 charcount = col.Name.Count() > charcount ? col.Name.Count() : charcount;
             }
 
             //add table columns
-            foreach (var col in dragingTable.Columns)
+            foreach (var col in currentTable.Columns)
             {
                 Label lab = new Label() { Content = col.Name };
                 lab.Width = charcount * charsize - charsize * 2;
                 listBox.Items.Add(lab);
-                lab.PreviewMouseLeftButtonDown += (s, er) => { HandlelistBoxClick(dragingTable, col, s); };
+
+                lab.PreviewMouseLeftButtonDown += (s, er) => { HandlelistBoxClick(currentTable, col, s); };
                 lab.PreviewMouseLeftButtonDown += lab_PreviewMouseLeftButtonDown;
             }
 
@@ -218,17 +290,30 @@ namespace DatabaseAnalizer
             if (canvas.Width < e.GetPosition(canvas).X + charcount * charsize)
                 canvas.Width = e.GetPosition(canvas).X + charcount * charsize;
 
-            if (canvas.Height < e.GetPosition(canvas).Y + (dragingTable.Columns.Count + 1) * 30)
-                canvas.Height = e.GetPosition(canvas).Y + (dragingTable.Columns.Count + 1) * 30;
+            if (canvas.Height < e.GetPosition(canvas).Y + (currentTable.Columns.Count + 1) * 30)
+                canvas.Height = e.GetPosition(canvas).Y + (currentTable.Columns.Count + 1) * 30;
 
             //table header
             Label header = new Label()
             {
+                Name = dragingTable.Name,
                 Content = dragingTable.Name.Replace("_", "__"),
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Gray.A, System.Drawing.Color.Gray.R, System.Drawing.Color.Gray.G, System.Drawing.Color.Gray.B)),
                 Width = charcount * charsize - charsize
             };
 
+            ContextMenu tableHeaderMeniu = new System.Windows.Controls.ContextMenu();
+            MenuItem makeMainTable = new MenuItem()
+            {
+                Header = "Make this table main",
+            };
+            DatabaseAnalizer.Models.Table tempTable = new DatabaseAnalizer.Models.Table();
+            tempTable = dragingTable;
+
+            makeMainTable.PreviewMouseLeftButtonDown += (s, er) => { makeMainTable_PreviewMouseLeftButtonDown(tempTable, header); };
+
+            tableHeaderMeniu.Items.Add(makeMainTable);
+            header.ContextMenu = tableHeaderMeniu;
             mainItem.Name = dragingTable.Name;
 
             mainItem.Items.Add(header);
@@ -241,8 +326,32 @@ namespace DatabaseAnalizer
             listBox.Width = charcount * charsize - charsize;
             mainItem.Items.Add(listBox);
             canvas.Children.Add(mainItem);
-           
+
             PrintLog("dragging droping  - " + sender.ToString() + " " + e.ToString());
+        }
+
+        private void makeMainTable_PreviewMouseLeftButtonDown(DatabaseAnalizer.Models.Table table, Label sender)
+        {
+            ListBox lb = sender.Parent as ListBox;
+            Canvas mainCanvas = lb.Parent as Canvas;
+            foreach (var canItem in mainCanvas.Children)
+            {
+                if (canItem.GetType() == typeof(ListBox))
+                {
+                    ListBox lbInCanvas = canItem as ListBox;
+                    foreach (var lbItem in lbInCanvas.Items)
+                    {
+                        if (lbItem.GetType() == typeof(Label))
+                        {
+                            Label labelInTable = lbItem as Label;
+                            labelInTable.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Gray.A, System.Drawing.Color.Gray.R, System.Drawing.Color.Gray.G, System.Drawing.Color.Gray.B));
+                        }
+                    }
+                }
+            }
+
+            sender.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Green.A, System.Drawing.Color.Green.R, System.Drawing.Color.Green.G, System.Drawing.Color.Green.B));
+            _controller.SetMainTable(table);
         }
 
         private void canvas_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -258,7 +367,6 @@ namespace DatabaseAnalizer
 
         private void lab_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-
             Canvas mainCanvas = getMainCanvasFromTableListItem(sender);
             ListBox moovingLabel = getMovingLabelFromTableItem(sender);
             if (this.isDrawingLine && currentTableArrow.startMovableElement.Name != moovingLabel.Name)
@@ -278,18 +386,23 @@ namespace DatabaseAnalizer
             }
         }
 
-
-
         private void mainItem_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             isElementMoving = false;
         }
 
         private void HandlelistBoxClick(DatabaseAnalizer.Models.Table table, Column col, object s)
-        {  
+        {
             PrintLog("clicked from - " + table.Name + " and col - " + col.Name);
             if (!this.isDrawingLine)
+            {
                 this.currentTableArrow = new TableArrow(table, col);
+            }
+            else if (this.currentTableArrow != null)
+            {
+                this.currentTableArrow.endTable = table;
+                this.currentTableArrow.endColumn = col;
+            }
 
         }
 
@@ -367,7 +480,7 @@ namespace DatabaseAnalizer
                 }
             }
         }
-               
+
 
         /// <summary>
         /// draging table from table list
@@ -411,8 +524,56 @@ namespace DatabaseAnalizer
                     int y = this.currentTableArrow.line.Y1 > e.GetPosition(mainCanvas).Y ? 2 : -2;
                     SetArrowEndPosition(currentTableArrow, e.GetPosition(mainCanvas).X + x, e.GetPosition(mainCanvas).Y + y);
                 }
-
             }
+        }
+
+        private void Generate_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _controller.AnalizeData();
+        }
+
+        private void Analize_Click(object sender, RoutedEventArgs e)
+        {
+            if (_controller.ExistMainTable())
+                _controller.AnalizeData();
+            else
+                PrintLog("No main table selected");
+        }
+
+        public void AddLogSettings(AnalizedTable analized)
+        {
+            ColumnNames = new List<ComboBoxValues>();
+            foreach (var item in analized.table.Columns.Select(s => s.Name))
+            {
+                ComboBoxValues cbv = new ComboBoxValues() { Name = item };
+                cbv.Types = new ObservableCollection<ProcessTypes>();
+                cbv.Types.Add(ProcessTypes.Actor);
+                cbv.Types.Add(ProcessTypes.Atribute);
+                cbv.Types.Add(ProcessTypes.Event);
+                cbv.Types.Add(ProcessTypes.Trace);
+                cbv.Types.Add(ProcessTypes.Time);
+                ColumnNames.Add(cbv);
+            }
+            Table_settings.DataContext = ColumnNames;
+        }
+
+        public class ComboBoxValues
+        {
+            public string Name { set; get; }
+            public ObservableCollection<ProcessTypes> Types { get; set; }
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox cb = sender as ComboBox;
+            string name = cb.ToolTip.ToString();
+            ProcessTypes selected = (ProcessTypes)cb.SelectedValue;
+            _controller.AddColumnRole(name, selected);
+        }
+
+        private void GenerateLog_Click(object sender, RoutedEventArgs e)
+        {
+            geberated_table_log.Text = _controller.GetGeneratedLog();
         }
     }
 }

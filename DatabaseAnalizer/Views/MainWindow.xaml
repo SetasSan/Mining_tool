@@ -8,6 +8,7 @@
         <Menu  Height="26" x:Name="meniu1" VerticalAlignment="Top" Margin="0,0,10,0" >
             <MenuItem Header="_File" x:Name="menuFile">
                 <MenuItem Header="Select DB"/>
+                <MenuItem Header="Export log file" Click="ExportLogFile_click"/>
                 <MenuItem Header="Exit" Click="Exit_click"/>
             </MenuItem>
             <MenuItem Header="_View"/>
@@ -20,26 +21,43 @@
         <ToolBar Height="28" Margin="0,31,10,0" VerticalAlignment="Top">
             <Label Width="70" Focusable="false" IsEnabled="False" Content="Select DB :"/>
             <ComboBox x:Name="Databases_list" Height="23" Margin="0" VerticalAlignment="Top" Width="120" SelectionChanged="Databases_list_SelectionChanged"/>
+            <Button Content="Analize" Height="23" VerticalAlignment="Top" Width="75" Click="Analize_Click"/>
+            <Button Content="Generate Log" Height="23" VerticalAlignment="Top" Width="80" Click="GenerateLog_Click"/>
         </ToolBar>
         <ScrollViewer Margin="10,64,0,45" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Width="154">
             <StackPanel x:Name="ButtonsPanel"  HorizontalAlignment="Left" Width="133"/>
         </ScrollViewer>
-        <TabControl x:Name="tab_main" Margin="169,64,332,215">
+        <TabControl x:Name="tab_main" Margin="169,59,332,210">
             <TabItem x:Name="tab_table_data" Header="Table data">
                 <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
                     <DataGrid x:Name="table_data" />
                 </Grid>
             </TabItem>
-            <TabItem Header="TabItem">
-                <Grid Background="#FFE5E5E5">
+            <TabItem Header="Database tables relations" >
+                <Grid Background="#FFE5E5E5" Margin="0,-2,-2,-5" >
                     <Grid.ContextMenu>
                         <ContextMenu/>
                     </Grid.ContextMenu>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                        <Canvas MouseRightButtonUp="canvas_MouseRightButtonUp" MouseMove="Canvas_MouseMove" AllowDrop="True" Background="Transparent" Drop="DropHandler" HorizontalAlignment="Left" Height="461" Margin="10,10,0,0" VerticalAlignment="Top" Width="803"/>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,0,0,27">
+                        <Canvas  MouseRightButtonUp="canvas_MouseRightButtonUp" MouseMove="Canvas_MouseMove" AllowDrop="True" Background="Transparent" Drop="DropHandler" Height="3000" Width="3000"/>
                     </ScrollViewer>
+                    <ToolBarPanel Canvas.Left="0" Canvas.Top="459" VerticalAlignment="Bottom">
+                        <Button Content="Generate" HorizontalAlignment="Left" Width="Auto" PreviewMouseDown="Generate_PreviewMouseDown"/>
+                    </ToolBarPanel>
+                </Grid>                
+            </TabItem>
+            <TabItem x:Name="tab_generated_table_data" Header="Generated data">
+                <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
+                    <DataGrid x:Name="geberated_table_data" />
                 </Grid>
             </TabItem>
+
+            <TabItem x:Name="tab_generated_log" Header="Generated Log">
+                <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
+                    <TextBox x:Name="geberated_table_log" />
+                </Grid>
+            </TabItem>
+
         </TabControl>
         <TabControl Margin="0,86,10,40" HorizontalAlignment="Right" Width="317">
             <TabItem Header="Table parametres">
@@ -48,7 +66,20 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Table settings">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid x:Name="Table_settings">
+                    <DataGrid Margin="5" ItemsSource="{Binding}" AutoGenerateColumns="False">
+                        <DataGrid.Columns>                           
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                            <DataGridTemplateColumn Header="Process Type" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox Margin="2"  ToolTip="{Binding Name}" ItemsSource="{Binding Types}" SelectionChanged="ComboBox_SelectionChanged"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </TabItem>
         </TabControl>
 

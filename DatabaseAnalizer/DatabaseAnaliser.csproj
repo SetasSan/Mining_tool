@@ -94,6 +94,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Helper\TableArrow.cs" />
+    <Compile Include="Models\AnalizedTable.cs" />
+    <Compile Include="Models\ProcessTypes.cs" />
     <Compile Include="Models\TableRelation.cs" />
     <Compile Include="Views\TableArrow.cs" />
     <Page Include="Themes\Generic.xaml">

@@ -19,23 +19,23 @@ namespace DatabaseAnalizer.Controllers.Databases
         private string _serverAddress;
         private string _userName;
         private string _userPassword;
-         
+
         public MySqlServer(string name)
             : base(name)
-        {            
+        {
             _databases = new List<Database>();
-        }       
-        
+        }
+
         public string GetConnectionString()
         {
-            return "SERVER="+_serverAddress+";UID="+_userName+";PASSWORD='"+_userPassword+"';Convert Zero Datetime=True";
+            return "SERVER=" + _serverAddress + ";UID=" + _userName + ";PASSWORD='" + _userPassword + "';Convert Zero Datetime=True";
         }
-        
+
         public string GetServerName()
         {
             return Name;
         }
-         
+
         public void Extract()
         {
             _connection = new MySqlConnection(GetConnectionString());
@@ -89,7 +89,7 @@ namespace DatabaseAnalizer.Controllers.Databases
         private void ExtractTablesForDbs()
         {
             foreach (var database in GetDatabases())
-            {                
+            {
                 List<Table> tables = new List<Table>();
                 foreach (string table in GetTablesNamesForDb(database.GetDBName()))
                 {
@@ -104,13 +104,13 @@ namespace DatabaseAnalizer.Controllers.Databases
             return ExecuteSqlCommand("show tables from " + dbName);
         }
 
-       
-         /// <summary>
-         /// get table columns with type
-         /// </summary>
-         /// <param name="dbName"></param>
-         /// <param name="tableName"></param>
-         /// <returns></returns>
+
+        /// <summary>
+        /// get table columns with type
+        /// </summary>
+        /// <param name="dbName"></param>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         private void ExtractColumnNameAndTypes()
         {
 
@@ -120,7 +120,7 @@ namespace DatabaseAnalizer.Controllers.Databases
                 {
                     List<Column> columns = new List<Column>();
                     _connection.Open();
-                    MySqlCommand command = _connection.CreateCommand();                    
+                    MySqlCommand command = _connection.CreateCommand();
                     command.CommandText = "select COLUMN_NAME, COLUMN_TYPE from information_schema.COLUMNS WHERE TABLE_NAME= '" + table.Name + "' AND TABLE_SCHEMA='" + db.GetDBName() + "'";
                     MySqlDataReader tabs = command.ExecuteReader();
                     while (tabs.Read())
@@ -132,7 +132,7 @@ namespace DatabaseAnalizer.Controllers.Databases
 
                 }
             }
-            
+
         }
 
         private void ExtractTablesData()
@@ -141,21 +141,24 @@ namespace DatabaseAnalizer.Controllers.Databases
             {
                 foreach (var table in db.GetTables())
                 {
-                    foreach(var column in table.Columns){
-                  
-                    List<string> cellsData = new List<string>();
-                    _connection.Open();
-                    MySqlCommand command = _connection.CreateCommand();
-                    command.CommandText = "USE " + db.GetDBName() + "; select " + ConvertKey(column.Name) + " from " + table.Name;
-                    MySqlDataReader cells = command.ExecuteReader();
-              
-                    foreach (var c in cells)
+                    foreach (var column in table.Columns)
                     {
-                        cellsData.Add(((DbDataRecord)c).GetValue(0).ToString());
+
+                        Dictionary<int, string> cellsData = new Dictionary<int, string>();
+                        _connection.Open();
+                        MySqlCommand command = _connection.CreateCommand();
+                        command.CommandText = "USE " + db.GetDBName() + "; select " + ConvertKey(column.Name) + " from " + table.Name;
+                        MySqlDataReader cells = command.ExecuteReader();
+
+                        int i = 0;
+                        foreach (var c in cells)
+                        {
+                            cellsData.Add(i, ((DbDataRecord)c).GetValue(0).ToString());
+                            i++;
+                        }
+                        _connection.Close();
+                        column.CellsData = cellsData;
                     }
-                    _connection.Close();
-                    column.CellsData = cellsData;
-                    }                
 
                 }
             }
