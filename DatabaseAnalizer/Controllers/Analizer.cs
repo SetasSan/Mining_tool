@@ -107,9 +107,12 @@ namespace DatabaseAnalizer.Controllers
                             {
                                 var fValue = node.Table.Columns.Where(n => n.Name == rel.PrimaryKey.Name).Select(s => s.CellsData.Where(v => v.Key == cpk.Key)).SingleOrDefault().Select(s => s.Value).SingleOrDefault();
                                 var colCells = rel.ForeignTable.Columns.Where(n => n.Name == col.Name).SingleOrDefault();
-                                int index = rel.ForeignKey.CellsData.Where(w => w.Value == fValue).Select(v => v.Key).SingleOrDefault();
-                                var data = colCells.CellsData.Where(s => s.Key == index).Select(v => v.Value).SingleOrDefault();
-                                cell.CellsData.Add(this.GetLastKeyAndIncrement(cell), data);
+                                var indexes = rel.ForeignKey.CellsData.Where(w => w.Value == fValue).Select(v => v.Key).ToList();
+                                foreach (var index in indexes)
+                                {
+                                    var data = colCells.CellsData.Where(s => s.Key == index).Select(v => v.Value).SingleOrDefault();
+                                    cell.CellsData.Add(this.GetLastKeyAndIncrement(cell), data);
+                                }
 
                             }
                         }

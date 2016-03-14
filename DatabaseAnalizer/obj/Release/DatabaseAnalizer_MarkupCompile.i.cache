@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\
 DatabaseAnalizer
 none
 false
 TRACE
-D:\VisualStudio\Mining_tool\DatabaseAnalizer\App.xaml
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\App.xaml
 3-1574061470
 
-29-193378629
-22-82513562
+29-992670168
+22-1618958506
 Themes\Generic.xaml;Views\DBSettingsWindow.xaml;Views\MainWindow.xaml;
 
-False
+True
 
