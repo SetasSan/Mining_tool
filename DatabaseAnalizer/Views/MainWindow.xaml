@@ -41,8 +41,9 @@
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,0,0,27">
                         <Canvas  MouseRightButtonUp="canvas_MouseRightButtonUp" MouseMove="Canvas_MouseMove" AllowDrop="True" Background="Transparent" Drop="DropHandler" Height="3000" Width="3000"/>
                     </ScrollViewer>
-                    <ToolBarPanel Canvas.Left="0" Canvas.Top="459" VerticalAlignment="Bottom">
-                        <Button Content="Generate" HorizontalAlignment="Left" Width="Auto" PreviewMouseDown="Generate_PreviewMouseDown"/>
+                    <ToolBarPanel Canvas.Left="0" Canvas.Top="459" VerticalAlignment="Bottom" Orientation="Horizontal">
+                        <Button Content="Generate" HorizontalAlignment="Left" Width="100" PreviewMouseDown="Generate_PreviewMouseDown"/>
+                        <Label Width="300">Tip: Mark table id and drag line till relation field</Label>
                     </ToolBarPanel>
                 </Grid>                
             </TabItem>

@@ -217,7 +217,7 @@ namespace DatabaseAnalizer
             }
 
             if (analizetable.table.Columns.ElementAt(0).CellsData != null)
-                for (int i = 0; i < analizetable.table.Columns.ElementAt(0).CellsData.Count(); i++)
+                for (int i = 0; i < analizetable.table.Columns.Select(s=>s.CellsData.Count()).Max(); i++)
                 {
                     DataRow dr = dt.NewRow();
                     int e = 0;

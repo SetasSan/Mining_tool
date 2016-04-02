@@ -12,17 +12,20 @@ namespace DatabaseAnalizer.Models
         public bool IsMainTable { set; get; }
         public string Name { set; get; }        
         public List<Column> Columns { set; get; }
-        public List<TableRelation> Relations {set; get;}
+        public List<TableRelation> RelationsIn {set; get;}
+        public List<TableRelation> RelationsFrom { set; get; }
 
         public Table()
         {
-            Relations = new List<TableRelation>();
+            RelationsIn = new List<TableRelation>();
+            RelationsFrom = new List<TableRelation>();
             Columns = new List<Column>();
         }
         public Table(string name)
         {
             this.Name = name;
-            Relations = new List<TableRelation>();
+            RelationsIn = new List<TableRelation>();
+            RelationsFrom = new List<TableRelation>();
         }  
     }
 }

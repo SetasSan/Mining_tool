@@ -46,7 +46,7 @@ namespace DatabaseAnalizer.Controllers
             IServer mySqlServer = new MySqlServer("MySql");
             servers.Add(mySqlServer);
         }
-             
+
         private void SetUpWindows()
         {
             mainWindow.Visibility = System.Windows.Visibility.Hidden;
@@ -105,16 +105,33 @@ namespace DatabaseAnalizer.Controllers
         {
             foreach (var table in this.tablesForAnalize)
             {
+                //Relation then draging happens to selected table
                 if (table.Name == tableArrow.endMovableElement.Name)
                 {
-                    TableRelation relation = new TableRelation()
+
+                    TableRelation startRelation = new TableRelation()
                     {
-                        ForeignTable = tableArrow.startTable,
+                        PrimaryTable = tableArrow.startTable,
+                        ForeignTable = tableArrow.endTable,
+                        ForeignKey = tableArrow.endColumn,
+                        PrimaryKey = tableArrow.startColumn
                     };
 
-                    relation.ForeignKey = tableArrow.startColumn;
-                    relation.PrimaryKey = tableArrow.endColumn;
-                    table.Relations.Add(relation);
+
+                    table.RelationsIn.Add(startRelation);
+                }
+
+                //Relation then draging happens from selected table
+                if (table.Name == tableArrow.startMovableElement.Name)
+                {
+                    TableRelation endRelation = new TableRelation()
+                    {
+                        PrimaryTable = tableArrow.startTable,
+                        ForeignTable = tableArrow.endTable,
+                        ForeignKey = tableArrow.endColumn,
+                        PrimaryKey = tableArrow.startColumn
+                    };
+                    table.RelationsFrom.Add(endRelation);
                 }
             }
         }
