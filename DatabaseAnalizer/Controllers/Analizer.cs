@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DatabaseAnalizer.Helper;
 
 namespace DatabaseAnalizer.Controllers
 {
@@ -46,30 +47,45 @@ namespace DatabaseAnalizer.Controllers
             Node n = new Node();
             n.Nodes = IterateRelations(tables.Where(t => t.IsMainTable).SingleOrDefault());
             n.TableTo = tables.Where(t => t.IsMainTable).SingleOrDefault();
-            analizedTable = GetTableFromNode(n);
+            var ns = IterateRelations(tables);
+            analizedTable = GetTableFromNode(ns, n);
 
             return analizedTable;
         }
 
-        private AnalizedTable GetTableFromNode(Node node)
+        private AnalizedTable GetTableFromNode(List<Node> nodes, Node node)
         {
             AnalizedTable analizeTable = new AnalizedTable();
 
 
             analizeTable.table.Columns.AddRange(GetColumnsFromNode(node));
 
-            List<Column> list = FillWithData(node, analizeTable.table.Columns);
+            List<Column> list = FillWithData(nodes, analizeTable.table.Columns);
 
             analizeTable.table.Columns = list;
 
             return analizeTable;
         }
 
-        private List<Column> FillWithData(Node node, List<Column> list)
+        //private AnalizedTable GetTableFromNode(Node node)
+        //{
+        //    AnalizedTable analizeTable = new AnalizedTable();
+
+
+        //    analizeTable.table.Columns.AddRange(GetColumnsFromNode(node));
+
+        //    List<Column> list = FillWithData(node, analizeTable.table.Columns);
+
+        //    analizeTable.table.Columns = list;
+
+        //    return analizeTable;
+        //}
+
+        private List<Column> FillWithData(List<Node> nodes, List<Column> list)
         {
             List<List<Column>> temporaryTables = new List<List<Column>>();
-            List<Node> nodes = new List<Node>();
-            Iterate(node, nodes);
+
+
             foreach (var rel in list)
             {
                 //  rel.CellsData = nodes.First().RelationFromColumn.CellsData;//.Where(v=>v.TableFrom.Name == rel.Name.Split('.').First()).First().TableFrom.Columns.Where(c=>c.Name==rel.Name.Split('.').Last()).First().CellsData;
@@ -86,32 +102,51 @@ namespace DatabaseAnalizer.Controllers
                 int index = 0;
                 bool hasItemsInMainTable = temporaryTable.Where(w => w.CellsData.Count() != 0).Any();
                 List<Column> temporaryFromCalculation = temporaryTable.Select(s => new Column(s.Name, s.Type)).ToList();
-                foreach (var cellDataTo in nod.RelationToColumn.CellsData)
+                if (hasItemsInMainTable)
                 {
 
-                    if (hasItemsInMainTable)
-                    {                     
-
-                     
-                        if (temporaryTable.Where(w => w.Name == nod.TableFrom.Name + " - " + nod.RelationFromColumn.Name).FirstOrDefault().CellsData.Any()
-                            && !temporaryTable.Where(w => w.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).FirstOrDefault().CellsData.Any()
-                            && !temporaryTable.Where(w => w.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).FirstOrDefault().CellsData.Where(w => w.Key == index).Any())
+                    if (temporaryTable.Where(w => w.Name == nod.TableFrom.Name + " - " + nod.RelationFromColumn.Name).FirstOrDefault().CellsData.Any()
+                           && !temporaryTable.Where(w => w.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).FirstOrDefault().CellsData.Any()
+                           && !temporaryTable.Where(w => w.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).FirstOrDefault().CellsData.Where(w => w.Key == index).Any())
+                    {
+                        foreach (var cellDataTo in temporaryTable.Where(n => n.Name == nod.TableFrom.Name + " - " + nod.RelationFromColumn.Name).SingleOrDefault().CellsData)
                         {
+
 
                             var arrowFrom = temporaryTable.SingleOrDefault(l => l.Name == nod.TableFrom.Name + " - " + nod.RelationFromColumn.Name);
                             if (arrowFrom.CellsData.Where(w => w.Value == cellDataTo.Value).Select(s => s.Key).Any())
                             {
-                                foreach (var aFCell in arrowFrom.CellsData.Where(w => w.Value == cellDataTo.Value))
-                                {
-                                    foreach (var c in temporaryTable)
+
+                                //foreach (var aFCell in arrowFrom.CellsData.Where(w => w.Value == cellDataTo.Value))
+                                //{
+
+                                    if (nod.RelationToColumn.CellsData.Where(w => w.Value == cellDataTo.Value).Any())
                                     {
-                                        if (c.Name.Contains(nod.TableTo.Name + " - "))
-                                            temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, cellDataTo.Value ?? null);
-                                        else if (c.CellsData.Where(w => w.Key == aFCell.Key).Any())
-                                            temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, c.CellsData[aFCell.Key]);
+                                        foreach (var repeatedTo in nod.RelationToColumn.CellsData.Where(w => w.Value == cellDataTo.Value).ToList())
+                                        {
+                                            foreach (var c in temporaryTable)
+                                            {
+                                                if (c.Name.Contains(nod.TableTo.Name + " - "))
+                                                    temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, GetDataFromTableByKey(nod.TableTo.Columns, repeatedTo.Key, c.Name.Replace(nod.TableTo.Name + " - ", "")));
+                                                else if (c.CellsData.Where(w => w.Key == cellDataTo.Key).Any())
+                                                    temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, c.CellsData[cellDataTo.Key]);
+                                            }
+                                            index++;
+                                        }
                                     }
-                                    index++;
-                                }
+                                    else
+                                    {
+                                        foreach (var c in temporaryTable)
+                                        {
+                                            if (c.Name.Contains(nod.TableTo.Name + " - "))
+                                                temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, null);
+                                            else if (c.CellsData.Where(w => w.Key == cellDataTo.Key).Any())
+                                                temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, c.CellsData[cellDataTo.Key]);
+                                        }
+                                        index++;
+                                    }
+
+                               // }
                                 index--;
                             }
                             else
@@ -124,13 +159,14 @@ namespace DatabaseAnalizer.Controllers
                                         temporaryFromCalculation.Where(w => w.Name == c.Name).SingleOrDefault().CellsData.Add(index, null);
                                 }
                             }
+                            index++;
 
-
-                          
-                        }                  
-                        else
+                        }
+                    }
+                    else
+                    {
+                        foreach (var cellDataTo in temporaryTable.Where(n => n.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).SingleOrDefault().CellsData)
                         {
-
 
                             if (temporaryTable.Where(w => w.Name == nod.TableTo.Name + " - " + nod.RelationToColumn.Name).FirstOrDefault().CellsData.Any())
                             {
@@ -151,13 +187,18 @@ namespace DatabaseAnalizer.Controllers
                             {
 
                             }
+                            index++;
                         }
-
-                      
-
                     }
-                    else
+
+
+                }
+                else
+                {
+                    foreach (var cellDataTo in nod.RelationToColumn.CellsData)
                     {
+
+
                         foreach (var column in nod.TableTo.Columns)
                         {
                             var arrowTo = temporaryTable.SingleOrDefault(l => l.Name == nod.TableTo.Name + " - " + column.Name);
@@ -174,8 +215,9 @@ namespace DatabaseAnalizer.Controllers
 
                             arrowFrom.CellsData.Add(index, column.CellsData[valueIndex]);
                         }
+                        index++;
                     }
-                    index++;
+
 
 
                 }
@@ -188,6 +230,11 @@ namespace DatabaseAnalizer.Controllers
 
 
             return temporaryTable;
+        }
+
+        private string GetDataFromTableByKey(List<Column> columns, int key, string colName)
+        {
+            return columns.Where(c => c.Name == colName).SingleOrDefault().CellsData.Where(w => w.Key == key).SingleOrDefault().Value;
         }
 
 
@@ -311,7 +358,44 @@ namespace DatabaseAnalizer.Controllers
                 return 0;
             }
         }
+        private List<Node> IterateRelations(List<Table> tables)
+        {
+            List<Node> nodes = new List<Node>();
 
+            tables.MoveItemAtIndexToFront<Table>(tables.FindIndex(w => w.IsMainTable));
+            foreach (Table table in tables)
+            {
+                foreach (TableRelation rel in table.RelationsIn)
+                {
+                    Node n = new Node();
+                    if (!(nodes.Where(a => a.TableTo.Name == rel.ForeignTable.Name && a.TableFrom.Name == rel.PrimaryTable.Name && a.RelationToColumn.Name == rel.ForeignKey.Name).Any()))
+                    {
+
+                        n.TableTo = rel.ForeignTable;
+                        n.TableFrom = rel.PrimaryTable;
+                        n.RelationToColumn = rel.ForeignKey;
+                        n.RelationFromColumn = rel.PrimaryKey;
+                        nodes.Add(n);
+                    }
+
+                }
+                foreach (TableRelation rel in table.RelationsFrom)
+                {
+                    Node n = new Node();
+                    if (!(nodes.Where(a => a.TableTo.Name == rel.ForeignTable.Name && a.TableFrom.Name == rel.PrimaryTable.Name && a.RelationToColumn.Name == rel.ForeignKey.Name).Any()))
+                    {
+                        n.TableTo = rel.ForeignTable;
+                        n.TableFrom = rel.PrimaryTable;
+                        n.RelationToColumn = rel.ForeignKey;
+                        n.RelationFromColumn = rel.PrimaryKey;
+                        nodes.Add(n);
+                    }
+
+                }
+            }
+            return nodes;
+        }
+        //node tree maker
         private List<Node> IterateRelations(Table table, List<Node> INodes = null)
         {
             List<Node> nodes = new List<Node>();

@@ -93,6 +93,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Helper\ListExtensions.cs" />
     <Compile Include="Helper\TableArrow.cs" />
     <Compile Include="Models\AnalizedTable.cs" />
     <Compile Include="Models\ProcessTypes.cs" />
