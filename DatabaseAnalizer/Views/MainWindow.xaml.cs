@@ -1,11 +1,13 @@
 ﻿using DatabaseAnalizer.Controllers;
 using DatabaseAnalizer.Helper;
 using DatabaseAnalizer.Models;
+using DatabaseAnalizer.Views;
 using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.IO;
@@ -41,12 +43,20 @@ namespace DatabaseAnalizer
         private TableArrow currentTableArrow;
         private List<TableArrow> tableArrows = new List<TableArrow>();
         private List<ComboBoxValues> ColumnNames { set; get; }
-
+        private Filter filter = new Filter();
+        
         public MainWindow(Controller controller)
         {
             InitializeComponent();
             _controller = controller;
             CreateParametersTable();
+            this.Closing += CloseMainWindow;
+           
+        }
+
+        private void CloseMainWindow(object sender, CancelEventArgs e)
+        {
+            filter.Close();  
         }
 
         private void CreateParametersTable()
@@ -172,8 +182,32 @@ namespace DatabaseAnalizer
         {
             table_data.Columns.Clear();
             DataTable dt = new DataTable();
+            grid.IsReadOnly = true;
+            grid.AutoGenerateColumns = false;
 
-        
+            foreach (Column column in table.Columns)
+            {
+               // DataColumn dc = new DataColumn(column.Name.Replace("_", "__"), typeof(string));
+               // dt.Columns.Add(dc);
+
+                DataGridTextColumn col = new DataGridTextColumn();
+                col.Binding = new Binding(column.Name.Replace(".", ""));
+                var spHeader = new StackPanel() { Orientation = Orientation.Horizontal };
+                spHeader.Children.Add(new Label() { Content = column.Name.Replace("_", "__") });
+                var button = new Button();
+
+                button.Click +=  (s, er) => { HandlelistFilterButtonClick(column, s); };
+                button.Content = "Filter";
+                spHeader.Children.Add(button);
+                col.Header = spHeader;
+                grid.Columns.Add(col);
+            }
+
+            foreach (Column column in table.Columns)
+            {
+                DataColumn dc = new DataColumn(column.Name.Replace(".", ""), typeof(string));
+                dt.Columns.Add(dc);
+            }
 
             if (table.Columns.First().CellsData != null)
                 for (int i = 0; i < table.Columns.Select(s => s.CellsData.Count()).Max(); i++)
@@ -197,6 +231,7 @@ namespace DatabaseAnalizer
             PrintLog("filled table - " + table.Name);
         }
 
+     
         public void PrintLog(String log)
         {
             data_displayer.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " " + log + "\r\n");
@@ -543,5 +578,17 @@ namespace DatabaseAnalizer
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
             }
         }
+
+        private void HandlelistFilterButtonClick(Column col, object s)
+        {            
+            filter.FilterFieldName = col.Name;
+            filter.FilterFieldType = col.Type;
+            filter.Owner = this;
+            filter.FillFilter();
+            filter.ShowDialog();
+        }
+
+
+       
     }
 }

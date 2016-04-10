@@ -1,0 +1,34 @@
+﻿<Window x:Class="DatabaseAnalizer.Views.Filter"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Filter" Height="260" Width="340">
+    <Grid>
+        <Grid HorizontalAlignment="Right" Height="200" VerticalAlignment="Bottom" Width="300" Grid.Column="3" Grid.Row="5" Margin="0,0,20,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="Name:"/>
+            <TextBlock TextWrapping="Wrap"  Name="NameField" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" />
+            <Label Grid.Row="1" Grid.Column="0" Content="Type:"/>
+            <Label Name="TypeField" Grid.Row="1" Grid.Column="1" Content="-" Grid.ColumnSpan="2"/>
+            
+            <Label Name="FromField" Grid.Row="2" Grid.Column="0" Content="From" Grid.ColumnSpan="2"/>
+
+            <Label Name="ToField" Grid.Row="3" Grid.Column="0" Content="To" Grid.ColumnSpan="2"/>
+
+            <Button Grid.Row="4" Grid.Column="0" Content="Cancel" HorizontalAlignment="Right"  MinWidth="80" Margin="3"/>
+            <Button Grid.Row="4" Grid.Column="1" Content="Clear" HorizontalAlignment="Right"  MinWidth="80" Margin="3"/>
+            <Button Grid.Row="4" Grid.Column="2" Content="Filter" HorizontalAlignment="Right"  MinWidth="80" Margin="3" Click="AddFilterValue"/>
+        </Grid>
+
+    </Grid>
+</Window>
