@@ -24,7 +24,7 @@ namespace DatabaseAnalizer.Controllers
         private Analizer analizer;
         private List<Table> tablesForAnalize;
         private Dictionary<string, ProcessTypes> logSettings;
-        private AnalizedTable analized;
+        private Table analized;
         private string XESString = "";
         public string SelectedDb { set; get; }
 
@@ -138,7 +138,7 @@ namespace DatabaseAnalizer.Controllers
 
         internal void AddTable(Table dragingTable)
         {
-            this.tablesForAnalize.Add(dragingTable);
+            this.tablesForAnalize.Add(dragingTable);            
         }
 
         internal List<Models.Table> GetAllTables()
@@ -159,7 +159,8 @@ namespace DatabaseAnalizer.Controllers
         internal void AnalizeData()
         {
             analized = analizer.Analize(tablesForAnalize);
-            this.mainWindow.FillGeneratedDataTable(analized);
+            analized = this.selectedServer.LeftJoinTables(tablesForAnalize, analized, this.SelectedDb);
+            this.mainWindow.FillGeneratedDataTable(analized);            
             this.mainWindow.AddLogSettings(analized);
         }
 
@@ -184,17 +185,17 @@ namespace DatabaseAnalizer.Controllers
                 var traces = logSettings.Where(s => s.Value == ProcessTypes.Trace).Select(s => s.Key);
                 var eventColName = logSettings.Where(s => s.Value == ProcessTypes.Event).Select(s => s.Key).SingleOrDefault();
                 var timeColName = logSettings.Where(s => s.Value == ProcessTypes.Time).Select(s => s.Key).SingleOrDefault();
-                var traceCols = analized.table.Columns.Where(s => traces.Contains(s.Name));
+                var traceCols = analized.Columns.Where(s => traces.Contains(s.Name));
 
                 Dictionary<string, List<string>> distinctedCols = new Dictionary<string, List<string>>();
                 foreach (var traceCol in traceCols)
                     distinctedCols.Add(traceCol.Name, traceCol.CellsData.Select(s => s.Value).Distinct().ToList());
 
-                for (int i = 0; i < analized.table.Columns.FirstOrDefault().CellsData.Count(); i++)
+                for (int i = 0; i < analized.Columns.FirstOrDefault().CellsData.Count(); i++)
                 {
                     Event even = new Event();
                     string traceName = "";
-                    foreach (var cols in analized.table.Columns)
+                    foreach (var cols in analized.Columns)
                     {
                         foreach (var dist in distinctedCols)
                         {
@@ -299,6 +300,11 @@ namespace DatabaseAnalizer.Controllers
         internal string getXESString()
         {
             return XESString;
+        }
+
+        internal void ExtractData(string tableName)
+        {
+            selectedServer.ExtractTablesData(tableName);
         }
     }
 }

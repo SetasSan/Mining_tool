@@ -163,78 +163,38 @@ namespace DatabaseAnalizer
             FillDataTable(table, table_data);
         }
 
-        public void FillGeneratedDataTable(Models.AnalizedTable table)
+        public void FillGeneratedDataTable(Models.Table table)
         {
             FillDataTable(table, geberated_table_data);
-        }
+        }       
 
         private void FillDataTable(Models.Table table, DataGrid grid)
         {
             table_data.Columns.Clear();
             DataTable dt = new DataTable();
 
-            foreach (Column col in table.Columns)
-            {
-                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
-                dt.Columns.Add(dc);
-            }
+        
 
-            for (int i = 0; i < table.Columns.ElementAt(0).CellsData.Count(); i++)
-            {
-                DataRow dr = dt.NewRow();
-                int e = 0;
-                foreach (object l in table.Columns)
-                {
-                    dr[e] = table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();
-                    e++;
-                }
-                dt.Rows.Add(dr);
-            }
-
-            DataView dw = new DataView(dt);
-            grid.ItemsSource = dw;
-            PrintLog("filled table - " + table.Name);
-
-        }
-
-        private void FillDataTable(Models.AnalizedTable analizetable, DataGrid grid)
-        {
-            table_data.Columns.Clear();
-            DataTable dt = new DataTable();
-
-            //foreach (var header in analizetable.Header)
-            //{
-            //    DataColumn dc = new DataColumn(header.Key);               
-            //    dt.Columns.Add(dc);
-            //    for (int i = 0; i < header.Value - 1; i++ )
-            //        dt.Columns.Add(new DataColumn());
-            //}
-
-            foreach (Column col in analizetable.table.Columns)
-            {
-                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
-                dt.Columns.Add(dc);
-            }
-
-            if (analizetable.table.Columns.ElementAt(0).CellsData != null)
-                for (int i = 0; i < analizetable.table.Columns.Select(s=>s.CellsData.Count()).Max(); i++)
+            if (table.Columns.First().CellsData != null)
+                for (int i = 0; i < table.Columns.Select(s => s.CellsData.Count()).Max(); i++)
                 {
                     DataRow dr = dt.NewRow();
                     int e = 0;
-                    foreach (object l in analizetable.table.Columns)
+                    foreach (object l in table.Columns)
                     {
-                        if (analizetable.table.Columns.ElementAt(e).CellsData.Count() > i)
-                            dr[e] = analizetable.table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();
+                        if (table.Columns.ElementAt(e).CellsData.Count() > i)
+                            dr[e] = table.Columns.ElementAt(e).CellsData.ElementAt(i).Value != "" ? table.Columns.ElementAt(e).CellsData.ElementAt(i).Value.ToString() : "null";
                         else
                             dr[e] = "-";
                         e++;
                     }
                     dt.Rows.Add(dr);
+                    
                 }
 
             DataView dw = new DataView(dt);
             grid.ItemsSource = dw;
-            PrintLog("filled table - " + analizetable.table.Name);
+            PrintLog("filled table - " + table.Name);
         }
 
         public void PrintLog(String log)
@@ -488,11 +448,10 @@ namespace DatabaseAnalizer
         /// <param name="table"></param>
         public void HandleMouseDown(DatabaseAnalizer.Models.Table table)
         {
+            _controller.ExtractData(table.Name);
             PrintLog("Selected table - " + table.Name);
             ShowTableParametres(table);
             FillDataTable(table);
-
-
             dragingTable = table;
             PrintLog("start dragging - " + table.Name);
         }
@@ -540,10 +499,10 @@ namespace DatabaseAnalizer
                 PrintLog("No main table selected");
         }
 
-        public void AddLogSettings(AnalizedTable analized)
+        public void AddLogSettings(Models.Table analized)
         {
             ColumnNames = new List<ComboBoxValues>();
-            foreach (var item in analized.table.Columns.Select(s => s.Name))
+            foreach (var item in analized.Columns.Select(s => s.Name))
             {
                 ComboBoxValues cbv = new ComboBoxValues() { Name = item };
                 cbv.Types = new ObservableCollection<ProcessTypes>();
@@ -574,6 +533,15 @@ namespace DatabaseAnalizer
         private void GenerateLog_Click(object sender, RoutedEventArgs e)
         {
             geberated_table_log.Text = _controller.GetGeneratedLog();
+        }
+
+        private void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {
+            if (e.PropertyName.Contains('.') && e.Column is DataGridBoundColumn)
+            {
+                DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
+                dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
+            }
         }
     }
 }

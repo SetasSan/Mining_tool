@@ -1,4 +1,5 @@
 ﻿using DatabaseAnalizer.Controllers.Databases;
+using DatabaseAnalizer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +13,12 @@ namespace DatabaseAnalizer.Controllers.Interfaces
         string GetConnectionString();
         string GetServerName();
         void Extract();
+        void ExtractTablesData(string tableName);
 
         void SetUserName(string userName);
         void SetUserPassword(string userPassword);
         void SetServerAddress(string serverAddress);
-        List<Database> GetDatabases(); 
-        
+        List<Database> GetDatabases();
+        Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb);
     }
 }

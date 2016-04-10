@@ -42,7 +42,6 @@ namespace DatabaseAnalizer.Controllers.Databases
             _databases = ExtractDatabases();
             ExtractTablesForDbs();
             ExtractColumnNameAndTypes();
-            ExtractTablesData();
         }
 
 
@@ -135,11 +134,11 @@ namespace DatabaseAnalizer.Controllers.Databases
 
         }
 
-        private void ExtractTablesData()
+        public void ExtractTablesData(string tableName)
         {
             foreach (var db in _databases)
             {
-                foreach (var table in db.GetTables())
+                foreach (var table in db.GetTables().Where(t => t.Name == tableName))
                 {
                     foreach (var column in table.Columns)
                     {
@@ -207,5 +206,133 @@ namespace DatabaseAnalizer.Controllers.Databases
         {
             _serverAddress = serverAddress;
         }
+
+
+        public Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb)
+        {
+
+            List<Relation> relations = new List<Relation>();
+            List<Relation> quaredRelations = new List<Relation>();
+            List<string> JoinedTables = new List<string>();
+            List<string> notIncluded = new List<string>();
+            JoinedTables.Add(analized.Name);
+            List<string> selections = analized.Columns.Select(s => s.Name + " as '" + s.Name + "'").ToList();
+            string query = "USE " + selectedDb + "; select " + string.Join(", ", selections) + " from " + analized.Name;
+
+            foreach (var tab in tablesForAnalize)
+            {
+                var relFromTo = tab.RelationsFrom;
+                relFromTo.AddRange(tab.RelationsIn);
+                foreach (var rel in relFromTo)
+                {
+                    Relation newRel = new Relation()
+                    {
+                        TableFrom = rel.ForeignTable.Name,
+                        TableTo = rel.PrimaryTable.Name,
+                        ColumnFrom = rel.ForeignKey.Name,
+                        ColumnTo = rel.PrimaryKey.Name
+                    };
+                    if (!relations.Where(w => w.IsEqual(newRel)).Any())
+                        relations.Add(newRel);
+                }
+            }
+
+
+
+            var tablesNamesList = relations.Select(s => s.TableFrom).ToList();
+            tablesNamesList.AddRange(relations.Select(s => s.TableTo).ToList());
+
+            notIncluded = tablesNamesList.Distinct().ToList();
+            notIncluded.Remove(analized.Name);
+            while (notIncluded.Any())
+            {
+                var tableName = notIncluded.First();
+                bool changePositon = false;
+                if (!JoinedTables.Contains(tableName) && relations.Where(w => w.TableFrom == tableName || w.TableTo == tableName).Any())
+                {
+
+
+                    bool add = true;
+                    foreach (var rel in relations.Where(w => w.TableFrom == tableName || w.TableTo == tableName))
+                    {
+                        if ((JoinedTables.Contains(rel.TableFrom) || tableName == rel.TableFrom) && (JoinedTables.Contains(rel.TableTo) || tableName == rel.TableTo))
+                        {
+                            if (!quaredRelations.Where(w => w.IsEqual(rel)).Any())
+                            {
+                                if (JoinedTables.Contains(rel.TableFrom) && JoinedTables.Contains(rel.TableTo))
+                                {
+                                    query += " AND ";
+                                }
+
+                              
+                                if (add)
+                                {
+                                    query += " LEFT JOIN " + tableName + " ON ";
+                                    add = false;
+                                    notIncluded.Remove(tableName);
+                                    JoinedTables.Add(tableName);
+                                }
+                                quaredRelations.Add(rel);
+                                query += rel.TableFrom + "." + rel.ColumnFrom + " = " + rel.TableTo + "." + rel.ColumnTo + " ";
+                                var relFromTo = relations.Where(w => w.TableFrom == tableName || w.TableTo == tableName);
+                            }
+                        }
+                        else
+                        {
+                            changePositon = true;
+                        }
+                    }
+                    add = false;
+
+                }
+                else
+                {
+                    changePositon = true;                   
+                }
+                if (changePositon)
+                {
+                    changePositon = false;
+                    var item = notIncluded.First();
+                    notIncluded.Remove(notIncluded.First());
+                    notIncluded.Add(item);
+                }
+               
+
+            }
+
+
+            _connection.Open();
+            MySqlCommand command = _connection.CreateCommand();
+            command.CommandText = query;
+            MySqlDataReader rdr = command.ExecuteReader();
+            int index = 0;
+            while (rdr.Read())
+            {
+                foreach (var col in analized.Columns)
+                {
+                    col.CellsData.Add(index, rdr[col.Name].ToString());
+                }
+                index++;
+            }
+            _connection.Close();
+
+
+
+            return analized;
+        }
+    }
+    public class Relation
+    {
+        public string TableFrom { set; get; }
+        public string TableTo { set; get; }
+        public string ColumnFrom { set; get; }
+        public string ColumnTo { set; get; }
+
+        public bool IsEqual(Relation newRel)
+        {
+            return ((ColumnTo == newRel.ColumnTo && ColumnFrom == newRel.ColumnFrom) ||
+                (ColumnFrom == newRel.ColumnTo && ColumnTo == newRel.ColumnFrom));
+        }
+
     }
 }
