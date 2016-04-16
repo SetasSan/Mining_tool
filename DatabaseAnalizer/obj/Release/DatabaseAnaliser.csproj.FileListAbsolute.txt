@@ -1,5 +1,3 @@
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\DatabaseAnalizer.exe
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\MySql.Data.dll
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.exe
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.pdb
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\bin\Release\DatabaseAnalizer.exe
@@ -23,15 +21,20 @@ D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\Themes\Generic.baml
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.g.resources
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.Properties.Resources.resources
 D:\VisualStudio\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csproj.GenerateResource.Cache
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\DatabaseAnalizer.exe
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\DatabaseAnalizer.pdb
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\EntityFramework.dll
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\EntityFramework.SqlServer.dll
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\MySql.Data.dll
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\MySql.Data.Entity.EF6.dll
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\MySqlBackup.dll
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\EntityFramework.xml
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\EntityFramework.SqlServer.xml
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\DBSettingsWindow.baml
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\Filter.baml
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\MainWindow.baml
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\DBSettingsWindow.g.cs
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\Filter.g.cs
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\MainWindow.g.cs
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\App.g.cs
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer_MarkupCompile.cache
@@ -42,7 +45,4 @@ E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAn
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csproj.GenerateResource.Cache
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.exe
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.pdb
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\bin\Release\DatabaseAnalizer.pdb
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csprojResolveAssemblyReference.cache
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\Filter.baml
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\Views\Filter.g.cs

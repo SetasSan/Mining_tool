@@ -39,7 +39,31 @@ namespace DatabaseAnalizer
             String server = this.Server.Text;
             String username = this.UserName.Text;
             String pass = this.UserPassword.Text;
-            _controller.Connect();
+
+            if (_selectedServerName == null)
+            {
+                MessageBoxResult result = MessageBox.Show("Database not selected");
+                if (result == MessageBoxResult.Yes)
+                {
+                    Application.Current.Shutdown();
+                }
+
+            }
+            else
+            {
+                _controller.PrepareServer();
+                var checkMessage = _controller.CheckDatabase();
+                if (checkMessage != null)
+                {
+                    MessageBoxResult result = MessageBox.Show(checkMessage);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        Application.Current.Shutdown();
+                    }
+                }
+                else
+                    _controller.Connect();
+            }
         }
 
         /// <summary>

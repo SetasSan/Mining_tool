@@ -19,6 +19,10 @@ namespace DatabaseAnalizer.Controllers.Interfaces
         void SetUserPassword(string userPassword);
         void SetServerAddress(string serverAddress);
         List<Database> GetDatabases();
-        Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb);
+        Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb, List<Views.ConditionSetting> Filters);
+
+        string IsServerWorking();
+
+        List<RelationFromDb> GetTablesRelations(string selectedDb);
     }
 }

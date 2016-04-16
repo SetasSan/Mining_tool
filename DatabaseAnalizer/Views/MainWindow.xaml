@@ -21,7 +21,9 @@
         <ToolBar Height="28" Margin="0,31,10,0" VerticalAlignment="Top">
             <Label Width="70" Focusable="false" IsEnabled="False" Content="Select DB :"/>
             <ComboBox x:Name="Databases_list" Height="23" Margin="0" VerticalAlignment="Top" Width="120" SelectionChanged="Databases_list_SelectionChanged"/>
-            <Button Content="Analize" Height="23" VerticalAlignment="Top" Width="75" Click="Analize_Click"/>
+            <Button Content="Analyze" Height="23" VerticalAlignment="Top" Width="75" Click="Analize_Click"/>
+            <Button Content="Find relations" Height="23" VerticalAlignment="Top" Width="80" ToolTip="Find relations from schema" Click="Find_relations_from_schema_Click"/>
+            <Button Content="Filter" Height="23" VerticalAlignment="Top" Width="80" Click="OpenFilterClick"/>
             <Button Content="Generate Log" Height="23" VerticalAlignment="Top" Width="80" Click="GenerateLog_Click"/>
         </ToolBar>
         <ScrollViewer Margin="10,64,0,45" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Width="154">
@@ -39,17 +41,17 @@
                         <ContextMenu/>
                     </Grid.ContextMenu>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,0,0,27">
-                        <Canvas  MouseRightButtonUp="canvas_MouseRightButtonUp" MouseMove="Canvas_MouseMove" AllowDrop="True" Background="Transparent" Drop="DropHandler" Height="3000" Width="3000"/>
+                        <Canvas Name="Relation_Canvas" MouseRightButtonUp="canvas_MouseRightButtonUp" MouseMove="Canvas_MouseMove" AllowDrop="True" Background="Transparent" Drop="DropHandler" Height="3000" Width="3000"/>
                     </ScrollViewer>
                     <ToolBarPanel Canvas.Left="0" Canvas.Top="459" VerticalAlignment="Bottom" Orientation="Horizontal">
                         <Button Content="Generate" HorizontalAlignment="Left" Width="100" PreviewMouseDown="Generate_PreviewMouseDown"/>
                         <Label Width="300">Tip: Mark table id and drag line till relation field</Label>
                     </ToolBarPanel>
-                </Grid>                
+                </Grid>
             </TabItem>
             <TabItem x:Name="tab_generated_table_data" Header="Generated data">
                 <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
-                    <DataGrid x:Name="geberated_table_data" AutoGeneratingColumn="r2_AutoGeneratingColumn"/>
+                    <DataGrid x:Name="generated_table_data" AutoGeneratingColumn="r2_AutoGeneratingColumn"/>
                 </Grid>
             </TabItem>
 
@@ -68,8 +70,12 @@
             </TabItem>
             <TabItem Header="Table settings">
                 <Grid x:Name="Table_settings">
-                    <DataGrid Margin="5" ItemsSource="{Binding}" AutoGenerateColumns="False">
-                        <DataGrid.Columns>                           
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="68*"/>
+                        <ColumnDefinition Width="239*"/>
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Margin="5" ItemsSource="{Binding}" AutoGenerateColumns="False" Grid.ColumnSpan="2">
+                        <DataGrid.Columns>
                             <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
                             <DataGridTemplateColumn Header="Process Type" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>

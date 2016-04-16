@@ -1,5 +1,6 @@
 ﻿using DatabaseAnalizer.Controllers.Databases;
 using DatabaseAnalizer.Controllers.Interfaces;
+using DatabaseAnalizer.Helper;
 using DatabaseAnalizer.Models;
 using DatabaseAnalizer.Models.Process;
 using System;
@@ -54,17 +55,29 @@ namespace DatabaseAnalizer.Controllers
             settingsWindow.Activate();
         }
 
-        public void Connect()
+        public void PrepareServer()
         {
             selectedServer = servers.Single(s => s.GetServerName() == settingsWindow.GetSelectedServerName());
+            if (selectedServer != null)
+            {
+                selectedServer.SetUserName(settingsWindow.UserName.Text);
+                selectedServer.SetUserPassword(settingsWindow.UserPassword.Text);
+                selectedServer.SetServerAddress(settingsWindow.Server.Text);
+            }
+            else
+            {
+                throw new Exception("Server has been not selected");
+            }
+
+        }
+        public void Connect()
+        {
+
             if (selectedServer != null)
             {
                 settingsWindow.Visibility = System.Windows.Visibility.Hidden;
                 mainWindow.Visibility = System.Windows.Visibility.Visible;
                 mainWindow.Activate();
-                selectedServer.SetUserName(settingsWindow.UserName.Text);
-                selectedServer.SetUserPassword(settingsWindow.UserPassword.Text);
-                selectedServer.SetServerAddress(settingsWindow.Server.Text);
                 selectedServer.Extract();
                 FillDbDropDownBox();
 
@@ -74,6 +87,11 @@ namespace DatabaseAnalizer.Controllers
                 throw new Exception("Server has been not selected");
             }
 
+        }
+
+        public string CheckDatabase()
+        {
+            return selectedServer.IsServerWorking();
         }
 
         public string[] GetDatabasesNames()
@@ -101,7 +119,7 @@ namespace DatabaseAnalizer.Controllers
 
 
 
-        public void AddTableRelation(Helper.TableArrow tableArrow)
+        public void AddTableRelation(TableArrow tableArrow)
         {
             foreach (var table in this.tablesForAnalize)
             {
@@ -138,7 +156,7 @@ namespace DatabaseAnalizer.Controllers
 
         internal void AddTable(Table dragingTable)
         {
-            this.tablesForAnalize.Add(dragingTable);            
+            this.tablesForAnalize.Add(dragingTable);
         }
 
         internal List<Models.Table> GetAllTables()
@@ -156,11 +174,11 @@ namespace DatabaseAnalizer.Controllers
             }
         }
 
-        internal void AnalizeData()
+        internal void AnalizeData(List<Views.ConditionSetting> Filters)
         {
             analized = analizer.Analize(tablesForAnalize);
-            analized = this.selectedServer.LeftJoinTables(tablesForAnalize, analized, this.SelectedDb);
-            this.mainWindow.FillGeneratedDataTable(analized);            
+            analized = this.selectedServer.LeftJoinTables(tablesForAnalize, analized, this.SelectedDb, Filters);
+            this.mainWindow.FillGeneratedDataTable(analized);
             this.mainWindow.AddLogSettings(analized);
         }
 
@@ -305,6 +323,56 @@ namespace DatabaseAnalizer.Controllers
         internal void ExtractData(string tableName)
         {
             selectedServer.ExtractTablesData(tableName);
+        }
+
+
+
+
+
+        public void CreateRelationsByDb()
+        {
+            List<RelationFromDb> relationsFromDb = selectedServer.GetTablesRelations(SelectedDb);
+
+            var referenceTableNames = relationsFromDb.GroupBy(s => s.ReferenceTableName);
+
+            foreach (var groupe in referenceTableNames)
+            {
+                if (tablesForAnalize.Where(w => w.Name == groupe.Key).Any())
+                    foreach (var refRow in groupe)
+                    {
+                        if (tablesForAnalize.Where(w => w.Name == refRow.TableName).Any())
+                        {
+                            var tableFrom = tablesForAnalize.Where(w => w.Name == refRow.TableName).SingleOrDefault();
+                            var colFrom = tableFrom.Columns.Where(w => w.Name == refRow.ColumnName).SingleOrDefault();
+                            mainWindow.HandlelistBoxClick(tableFrom, colFrom, null);
+
+                            var tableTo = tablesForAnalize.Where(w => w.Name == refRow.ReferenceTableName).SingleOrDefault();
+                            var colTo = tableFrom.Columns.Where(w => w.Name == refRow.ReferenceColumnName).SingleOrDefault();
+                            mainWindow.HandlelistBoxClick(tableTo, colTo, null);
+
+                            var arrowData = mainWindow.MakeArrowElemets(refRow);
+                            var arrow = new TableArrow(tableFrom, colFrom)
+                            {
+                                endTable = tableTo,
+                                endColumn = colTo,
+                                xDif = 10,
+                                yDif = 10,
+                                line = arrowData.line,
+                                startMovableElement = arrowData.startMovableElement,
+                                endMovableElement = arrowData.endMovableElement
+                            };
+                            AddTableRelation(arrow);
+
+                            mainWindow.tableArrows.Add(arrow);
+                            if (!ExistMainTable())
+                                mainWindow.makeMainTable_PreviewMouseLeftButtonDown(tableTo, arrowData.tableLabel);
+
+                        }
+                    }
+            }
+
+
+
         }
     }
 }

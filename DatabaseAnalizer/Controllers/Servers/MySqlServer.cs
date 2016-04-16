@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace DatabaseAnalizer.Controllers.Databases
 {
@@ -70,7 +71,7 @@ namespace DatabaseAnalizer.Controllers.Databases
         private List<string> ExecuteSqlCommand(string sCommand)
         {
             List<string> data = new List<string>();
-            _connection.Open();// if there no mysql daabase here we are geting error so we can handle it with try catch
+            _connection.Open();// if there no mysql database here we are geting error so we can handle it with try catch
             MySqlCommand command = _connection.CreateCommand();
             command.CommandText = sCommand;
             MySqlDataReader tabs = command.ExecuteReader();
@@ -81,6 +82,7 @@ namespace DatabaseAnalizer.Controllers.Databases
             _connection.Close();
             return data;
         }
+
 
         /// <summary>
         /// we filling all databases with tables because it will be faster go throught all of them
@@ -208,7 +210,7 @@ namespace DatabaseAnalizer.Controllers.Databases
         }
 
 
-        public Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb)
+        public Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb, List<Views.ConditionSetting> Filters)
         {
 
             List<Relation> relations = new List<Relation>();
@@ -264,7 +266,7 @@ namespace DatabaseAnalizer.Controllers.Databases
                                     query += " AND ";
                                 }
 
-                              
+
                                 if (add)
                                 {
                                     query += " LEFT JOIN " + tableName + " ON ";
@@ -287,7 +289,7 @@ namespace DatabaseAnalizer.Controllers.Databases
                 }
                 else
                 {
-                    changePositon = true;                   
+                    changePositon = true;
                 }
                 if (changePositon)
                 {
@@ -296,10 +298,20 @@ namespace DatabaseAnalizer.Controllers.Databases
                     notIncluded.Remove(notIncluded.First());
                     notIncluded.Add(item);
                 }
-               
+
 
             }
 
+            if (Filters != null && Filters.Any())
+            {
+                query += " WHERE ";
+                foreach (var where in Filters)
+                {
+                    query += where.Name + " " + where.Condition + " " + where.Value;
+                    if (where != Filters.Last())
+                        query += " AND ";
+                }
+            }
 
             _connection.Open();
             MySqlCommand command = _connection.CreateCommand();
@@ -319,6 +331,60 @@ namespace DatabaseAnalizer.Controllers.Databases
 
 
             return analized;
+        }
+
+
+        public string IsServerWorking()
+        {
+            try
+            {
+                _connection = new MySqlConnection(GetConnectionString());
+                _connection.Open();
+                _connection.Close();
+                return null;
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+
+        public List<RelationFromDb> GetTablesRelations(string selectedDb)
+        {
+            List<RelationFromDb> result = new List<RelationFromDb>();
+
+            var sCommand = @"SELECT 
+                                                 `TABLE_SCHEMA`,
+                                                 `TABLE_NAME`,
+                                                 `COLUMN_NAME`,
+                                                 `REFERENCED_TABLE_SCHEMA`,
+                                                 `REFERENCED_TABLE_NAME`,
+                                                 `REFERENCED_COLUMN_NAME`
+                                            FROM
+                                                 `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
+                                            WHERE
+                                                 `TABLE_SCHEMA` = '" + selectedDb + "' AND `REFERENCED_TABLE_NAME` IS NOT NULL;";
+
+
+            _connection.Open();// if there no mysql database here we are geting error so we can handle it with try catch
+            MySqlCommand command = _connection.CreateCommand();
+            command.CommandText = sCommand;
+            MySqlDataReader tabs = command.ExecuteReader();
+            while (tabs.Read())
+            {
+                result.Add(new RelationFromDb()
+                {
+                    TableName = tabs.GetString("TABLE_NAME"),
+                    ColumnName = tabs.GetString("COLUMN_NAME"),
+                    ReferenceColumnName = tabs.GetString("REFERENCED_COLUMN_NAME"),
+                    ReferenceTableName = tabs.GetString("REFERENCED_TABLE_NAME")
+                });
+            }
+            _connection.Close();
+
+
+            return result;
         }
     }
     public class Relation
