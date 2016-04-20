@@ -194,18 +194,10 @@ namespace DatabaseAnalizer
 
             foreach (Column column in table.Columns)
             {
-                // DataColumn dc = new DataColumn(column.Name.Replace("_", "__"), typeof(string));
-                // dt.Columns.Add(dc);
-
                 DataGridTextColumn col = new DataGridTextColumn();
                 col.Binding = new Binding(column.Name.Replace(".", ""));
                 var spHeader = new StackPanel() { Orientation = Orientation.Horizontal };
                 spHeader.Children.Add(new Label() { Content = column.Name.Replace("_", "__") });
-                //var button = new Button();
-
-                //button.Click +=  (s, er) => { HandlelistFilterButtonClick(column, s); };
-                //button.Content = "Filter";
-                //spHeader.Children.Add(button);
                 col.Header = spHeader;
                 grid.Columns.Add(col);
             }
@@ -235,7 +227,6 @@ namespace DatabaseAnalizer
 
             DataView dw = new DataView(dt);
             grid.ItemsSource = dw;
-            PrintLog("filled table - " + table.Name);
         }
 
 
@@ -309,12 +300,18 @@ namespace DatabaseAnalizer
             {
                 Header = "Make this table main",
             };
+            MenuItem removeTable = new MenuItem()
+            {
+                Header = "Remove this table",
+            };
             DatabaseAnalizer.Models.Table tempTable = new DatabaseAnalizer.Models.Table();
             tempTable = dragingTable;
 
             makeMainTable.PreviewMouseLeftButtonDown += (s, er) => { makeMainTable_PreviewMouseLeftButtonDown(tempTable, header); };
+            removeTable.PreviewMouseLeftButtonDown += (s, er) => { removeTableFromCanvas_CLick(tempTable, header); };
 
             tableHeaderMeniu.Items.Add(makeMainTable);
+            tableHeaderMeniu.Items.Add(removeTable);
             header.ContextMenu = tableHeaderMeniu;
             mainItem.Name = dragingTable.Name;
 
@@ -328,8 +325,42 @@ namespace DatabaseAnalizer
             listBox.Width = charcount * charsize - charsize;
             mainItem.Items.Add(listBox);
             canvas.Children.Add(mainItem);
+        }
 
-            PrintLog("dragging droping  - " + sender.ToString() + " " + e.ToString());
+        private void removeTableFromCanvas_CLick(Models.Table tempTable, Label header)
+        {
+            string tableName = header.Content.ToString();
+            
+
+            ListBox listBoxForRemove = null;
+            foreach (var canItem in Relation_Canvas.Children)
+            {
+                if (canItem.GetType() == typeof(ListBox) && ((ListBox)canItem).Name == header.Content.ToString())
+                {
+                    listBoxForRemove = canItem as ListBox;
+
+
+                }
+
+            }
+
+            //cremove visual table
+            if (listBoxForRemove != null)
+                Relation_Canvas.Children.Remove(listBoxForRemove);
+
+            //remove arrows
+            var tableArrowsForRemoving = tableArrows.Where(s => s.endMovableElement.Name == header.Content.ToString() || s.startMovableElement.Name == header.Content.ToString()).ToList();
+        
+            foreach (var arrow in tableArrowsForRemoving)
+            {
+                tableArrows.Remove(arrow);
+                Relation_Canvas.Children.Remove(arrow.line);
+
+            }
+
+
+            _controller.removeTable(tableName);
+
         }
 
         public void makeMainTable_PreviewMouseLeftButtonDown(DatabaseAnalizer.Models.Table table, Label sender)
@@ -395,7 +426,7 @@ namespace DatabaseAnalizer
 
         public void HandlelistBoxClick(DatabaseAnalizer.Models.Table table, Column col, object s)
         {
-            PrintLog("clicked from - " + table.Name + " and col - " + col.Name);
+
             if (!this.isDrawingLine)
             {
                 this.currentTableArrow = new TableArrow(table, col);
@@ -491,11 +522,9 @@ namespace DatabaseAnalizer
         public void HandleMouseDown(DatabaseAnalizer.Models.Table table)
         {
             _controller.ExtractData(table.Name);
-            PrintLog("Selected table - " + table.Name);
             ShowTableParametres(table);
             FillDataTable(table);
             dragingTable = table;
-            PrintLog("start dragging - " + table.Name);
         }
 
         private void Canvas_MouseMove(object sender, MouseEventArgs e)
@@ -645,8 +674,8 @@ namespace DatabaseAnalizer
                                     var label = (Label)colInTableList;
                                     UIElement container = VisualTreeHelper.GetParent(listBox) as UIElement;
                                     Point relativeLocation = listBox.TranslatePoint(new Point(0, 0), container);
-                                    arrowElements.line.X1 = relativeLocation.X+20;
-                                    arrowElements.line.Y1 = relativeLocation.Y+i*30+7;
+                                    arrowElements.line.X1 = relativeLocation.X + 20;
+                                    arrowElements.line.Y1 = relativeLocation.Y + i * 30 + 7;
                                     arrowElements.startMovableElement = listBox;
                                 }
                             }
@@ -678,11 +707,10 @@ namespace DatabaseAnalizer
                                     UIElement container = VisualTreeHelper.GetParent(listBox) as UIElement;
                                     Point relativeLocation = listBox.TranslatePoint(new Point(0, 0), container);
                                     arrowElements.line.X2 = relativeLocation.X + 20;
-                                    arrowElements.line.Y2 = relativeLocation.Y + i * 30+15;
+                                    arrowElements.line.Y2 = relativeLocation.Y + i * 30 + 15;
                                     arrowElements.endMovableElement = listBox;
                                     arrowElements.tableLabel = mainTableLabel;
                                     foundEnd = true;
-
 
                                 }
                             }

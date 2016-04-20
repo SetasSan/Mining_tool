@@ -1,5 +1,6 @@
 ﻿using DatabaseAnalizer.Controllers.Databases;
 using DatabaseAnalizer.Controllers.Interfaces;
+using DatabaseAnalizer.Controllers.Servers;
 using DatabaseAnalizer.Helper;
 using DatabaseAnalizer.Models;
 using DatabaseAnalizer.Models.Process;
@@ -45,7 +46,9 @@ namespace DatabaseAnalizer.Controllers
         private void AddServers()
         {
             IServer mySqlServer = new MySqlServer("MySql");
+            IServer msSqlServer = new MsSqlServer("MsSql");
             servers.Add(mySqlServer);
+            servers.Add(msSqlServer);
         }
 
         private void SetUpWindows()
@@ -156,6 +159,7 @@ namespace DatabaseAnalizer.Controllers
 
         internal void AddTable(Table dragingTable)
         {
+            dragingTable.IsMainTable = false;
             this.tablesForAnalize.Add(dragingTable);
         }
 
@@ -165,7 +169,7 @@ namespace DatabaseAnalizer.Controllers
         }
 
         internal void SetMainTable(Table table)
-        {
+        { 
             foreach (var tab in this.tablesForAnalize)
             {
                 tab.IsMainTable = false;
@@ -176,10 +180,24 @@ namespace DatabaseAnalizer.Controllers
 
         internal void AnalizeData(List<Views.ConditionSetting> Filters)
         {
-            analized = analizer.Analize(tablesForAnalize);
-            analized = this.selectedServer.LeftJoinTables(tablesForAnalize, analized, this.SelectedDb, Filters);
-            this.mainWindow.FillGeneratedDataTable(analized);
-            this.mainWindow.AddLogSettings(analized);
+            if (CheckTables(tablesForAnalize))
+            {
+                analized = analizer.Analize(tablesForAnalize);
+                analized = this.selectedServer.LeftJoinTables(tablesForAnalize, analized, this.SelectedDb, Filters);
+                this.mainWindow.FillGeneratedDataTable(analized);
+                this.mainWindow.AddLogSettings(analized);
+            }
+            else
+            {
+                mainWindow.PrintLog("Some tables has no relation");
+            }
+        }
+
+        private bool CheckTables(List<Table> tablesForAnalize)
+        {
+            if (tablesForAnalize.Count() == 1)
+                return true;
+            return !tablesForAnalize.Where(w => w.RelationsFrom.Count() == 0 && w.RelationsIn.Count() == 0).Any();
         }
 
         public bool ExistMainTable()
@@ -222,7 +240,7 @@ namespace DatabaseAnalizer.Controllers
                         }
                         if (cols.Name == eventColName)
                             even.Name = cols.CellsData.Where(k => k.Key == i).SingleOrDefault().Value;
-                        if (cols.Name == timeColName)
+                        if (cols.Name == timeColName && cols.CellsData.Where(k => k.Key == i).SingleOrDefault().Value!=null)
                             even.Time = Convert.ToDateTime(cols.CellsData.Where(k => k.Key == i).SingleOrDefault().Value).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss");
                     }
 
@@ -236,16 +254,7 @@ namespace DatabaseAnalizer.Controllers
                     log.traces.Where(t => t.traceName == traceName).SingleOrDefault().events.Add(even);
                 }
             }
-
-            //for (int index = 0; index < analized.table.Columns.FirstOrDefault().CellsData.Count(); index++)
-            //{
-            //    Event even = new Event();
-            //    foreach (var col in analized.table.Columns)
-            //    {
-            //        even.atributes.Add(new Models.Process.Attributes.Attribute(col.Name, getTypeForXml(col.Type), col.CellsData.Where(w => w.Key == index).SingleOrDefault().Value));
-            //    }
-            //    log.trace.events.Add(even);
-            //}
+          
             return PrintXML(log.ToString());
         }
 
@@ -326,9 +335,6 @@ namespace DatabaseAnalizer.Controllers
         }
 
 
-
-
-
         public void CreateRelationsByDb()
         {
             List<RelationFromDb> relationsFromDb = selectedServer.GetTablesRelations(SelectedDb);
@@ -347,7 +353,7 @@ namespace DatabaseAnalizer.Controllers
                             mainWindow.HandlelistBoxClick(tableFrom, colFrom, null);
 
                             var tableTo = tablesForAnalize.Where(w => w.Name == refRow.ReferenceTableName).SingleOrDefault();
-                            var colTo = tableFrom.Columns.Where(w => w.Name == refRow.ReferenceColumnName).SingleOrDefault();
+                            var colTo = tableTo.Columns.Where(w => w.Name == refRow.ReferenceColumnName).SingleOrDefault();
                             mainWindow.HandlelistBoxClick(tableTo, colTo, null);
 
                             var arrowData = mainWindow.MakeArrowElemets(refRow);
@@ -373,6 +379,26 @@ namespace DatabaseAnalizer.Controllers
 
 
 
+        }
+
+        internal void removeTable(string tableName)
+        {
+            var tableForRemoving = tablesForAnalize.Where(w => w.Name == tableName).SingleOrDefault();
+            if (tableForRemoving != null)
+            {
+                var tabForRemove = tableForRemoving.RelationsFrom.ToList();
+                foreach (var relIn in tabForRemove)
+                {
+                    var forRemove = relIn.PrimaryTable.RelationsFrom.Where(w => w.ForeignTable.Name == tableName).ToList();
+                    foreach (var item in forRemove)
+                        relIn.PrimaryTable.RelationsFrom.Remove(item);
+                }
+                tableForRemoving.RelationsIn = new List<TableRelation>();
+                tableForRemoving.RelationsFrom = new List<TableRelation>();
+                tablesForAnalize.Remove(tableForRemoving);
+            }
+
+            //throw new NotImplementedException();
         }
     }
 }
