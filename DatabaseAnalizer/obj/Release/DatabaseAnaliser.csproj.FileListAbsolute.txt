@@ -45,4 +45,3 @@ E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAn
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csproj.GenerateResource.Cache
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.exe
 E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnalizer.pdb
-E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csprojResolveAssemblyReference.cache

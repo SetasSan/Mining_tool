@@ -93,6 +93,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controllers\Servers\MsSqlServer.cs" />
     <Compile Include="Helper\EnumHelper.cs" />
     <Compile Include="Helper\Enums\CompareValue.cs" />
     <Compile Include="Helper\Enums\DataTypes.cs" />

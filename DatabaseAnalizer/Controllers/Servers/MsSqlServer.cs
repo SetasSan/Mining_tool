@@ -1,23 +1,22 @@
-﻿using DatabaseAnalizer.Controllers.Interfaces;
-using DatabaseAnalizer.Controllers.Servers;
+﻿using DatabaseAnalizer.Controllers.Databases;
+using DatabaseAnalizer.Controllers.Interfaces;
 using DatabaseAnalizer.Models;
-using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 
-namespace DatabaseAnalizer.Controllers.Databases
+namespace DatabaseAnalizer.Controllers.Servers
 {
-    public class MySqlServer : Server, IServer
+    public class MsSqlServer : Server, IServer
     {
-        public MySqlConnection _connection;
 
-        public MySqlServer(string name)
+        public SqlConnection _connection;
+
+        public MsSqlServer(string name)
             : base(name)
         {
             _databases = new List<Database>();
@@ -25,42 +24,40 @@ namespace DatabaseAnalizer.Controllers.Databases
 
         public string GetConnectionString()
         {
-            return "SERVER=" + _serverAddress + ";UID=" + _userName + ";PASSWORD='" + _userPassword + "';Convert Zero Datetime=True";
+            string con = "Server=" + _serverAddress + ";";//.\SQLEXPRESS
+            con += !string.IsNullOrWhiteSpace(_userName) ? "User Id='" + _userName + "';" : "";
+            con += !string.IsNullOrWhiteSpace(_userPassword) ? "Password='" + _userPassword + "';" : "";
+            con += string.IsNullOrWhiteSpace(_userName) ? "Trusted_Connection=Yes;" : "";
+            return con;
         }
-      
+
 
         public void Extract()
         {
-            _connection = new MySqlConnection(GetConnectionString());
+            _connection = new SqlConnection(GetConnectionString());
             _databases = ExtractDatabases();
             ExtractTablesForDbs();
             ExtractColumnNameAndTypes();
-        }   
-
+        }
 
         private List<Database> ExtractDatabases()
         {
             List<Database> databases = new List<Database>();
 
-            foreach (string dbName in ExecuteSqlCommand("select SCHEMA_NAME from information_schema.SCHEMATA"))
+            foreach (string dbName in ExecuteSqlCommand(" SELECT name FROM master.dbo.sysdatabases"))
             {
                 databases.Add(new Database(dbName));
             }
             return databases;
         }
 
-        /// <summary>
-        /// Execute sql command and return result in List<string>
-        /// </summary>
-        /// <param name="sCommand"></param>
-        /// <returns></returns>
-        private List<string> ExecuteSqlCommand(string sCommand)
+        private IEnumerable<string> ExecuteSqlCommand(string sCommand)
         {
             List<string> data = new List<string>();
             _connection.Open();// if there no mysql database here we are geting error so we can handle it with try catch
-            MySqlCommand command = _connection.CreateCommand();
+            SqlCommand command = _connection.CreateCommand();
             command.CommandText = sCommand;
-            MySqlDataReader tabs = command.ExecuteReader();
+            SqlDataReader tabs = command.ExecuteReader();
             while (tabs.Read())
             {
                 data.Add(tabs.GetString(0));
@@ -69,10 +66,28 @@ namespace DatabaseAnalizer.Controllers.Databases
             return data;
         }
 
+        private void ExtractColumnNameAndTypes()
+        {
+            foreach (var db in _databases)
+            {
+                foreach (var table in db.GetTables())
+                {
+                    List<Column> columns = new List<Column>();
+                    _connection.Open();
+                    SqlCommand command = _connection.CreateCommand();
+                    command.CommandText = "select COLUMN_NAME, DATA_TYPE from " + db.GetDBName() + ".information_schema.COLUMNS WHERE TABLE_NAME= '" + table.Name + "';";
+                    SqlDataReader tabs = command.ExecuteReader();
+                    while (tabs.Read())
+                    {
+                        columns.Add(new Column(tabs["COLUMN_NAME"].ToString(), tabs["DATA_TYPE"].ToString()));
+                    }
+                    _connection.Close();
+                    table.Columns = columns;
 
-        /// <summary>
-        /// we filling all databases with tables because it will be faster go throught all of them
-        /// </summary>
+                }
+            }
+        }
+
         private void ExtractTablesForDbs()
         {
             foreach (var database in GetDatabases())
@@ -86,39 +101,9 @@ namespace DatabaseAnalizer.Controllers.Databases
             }
         }
 
-        private List<string> GetTablesNamesForDb(string dbName)
+        private IEnumerable<string> GetTablesNamesForDb(string dbName)
         {
-            return ExecuteSqlCommand("show tables from " + dbName);
-        }
-
-
-        /// <summary>
-        /// get table columns with type
-        /// </summary>
-        /// <param name="dbName"></param>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        private void ExtractColumnNameAndTypes()
-        {
-
-            foreach (var db in _databases)
-            {
-                foreach (var table in db.GetTables())
-                {
-                    List<Column> columns = new List<Column>();
-                    _connection.Open();
-                    MySqlCommand command = _connection.CreateCommand();
-                    command.CommandText = "select COLUMN_NAME, COLUMN_TYPE from information_schema.COLUMNS WHERE TABLE_NAME= '" + table.Name + "' AND TABLE_SCHEMA='" + db.GetDBName() + "'";
-                    MySqlDataReader tabs = command.ExecuteReader();
-                    while (tabs.Read())
-                    {
-                        columns.Add(new Column(tabs.GetString("COLUMN_NAME"), tabs.GetString("COLUMN_TYPE")));
-                    }
-                    _connection.Close();
-                    table.Columns = columns;
-
-                }
-            }
+            return ExecuteSqlCommand("SELECT TABLE_NAME FROM " + dbName + ".INFORMATION_SCHEMA.Tables;");
 
         }
 
@@ -133,9 +118,9 @@ namespace DatabaseAnalizer.Controllers.Databases
 
                         Dictionary<int, string> cellsData = new Dictionary<int, string>();
                         _connection.Open();
-                        MySqlCommand command = _connection.CreateCommand();
-                        command.CommandText = "USE " + db.GetDBName() + "; select " + ConvertKey(column.Name) + " from " + table.Name;
-                        MySqlDataReader cells = command.ExecuteReader();
+                        SqlCommand command = _connection.CreateCommand();
+                        command.CommandText = "USE " + db.GetDBName() + "; select " + column.Name + " from " + table.Name;
+                        SqlDataReader cells = command.ExecuteReader();
 
                         int i = 0;
                         foreach (var c in cells)
@@ -152,37 +137,9 @@ namespace DatabaseAnalizer.Controllers.Databases
 
         }
 
-        private string ConvertKey(string a)
+
+        public Models.Table LeftJoinTables(List<Models.Table> tablesForAnalize, Models.Table analized, string selectedDb, List<Views.ConditionSetting> Filters)
         {
-            string re = "";
-            switch (a)
-            {
-                case "table":
-                    {
-                        re = "'table'";
-                        break;
-                    }
-                case "KEY":
-                    {
-                        re = "'KEY'";
-                        break;
-                    }
-                default:
-                    {
-                        re = a;
-                        break;
-                    }
-
-
-            }
-            return re;
-        }
-
-
-
-        public Table LeftJoinTables(List<Table> tablesForAnalize, Table analized, string selectedDb, List<Views.ConditionSetting> Filters)
-        {
-
             List<Relation> relations = new List<Relation>();
             List<Relation> quaredRelations = new List<Relation>();
             List<string> JoinedTables = new List<string>();
@@ -284,9 +241,9 @@ namespace DatabaseAnalizer.Controllers.Databases
             }
 
             _connection.Open();
-            MySqlCommand command = _connection.CreateCommand();
+            SqlCommand command = _connection.CreateCommand();
             command.CommandText = query;
-            MySqlDataReader rdr = command.ExecuteReader();
+            SqlDataReader rdr = command.ExecuteReader();
             int index = 0;
             while (rdr.Read())
             {
@@ -303,12 +260,11 @@ namespace DatabaseAnalizer.Controllers.Databases
             return analized;
         }
 
-
         public string IsServerWorking()
         {
             try
             {
-                _connection = new MySqlConnection(GetConnectionString());
+                _connection = new SqlConnection(GetConnectionString());
                 _connection.Open();
                 _connection.Close();
                 return null;
@@ -324,51 +280,43 @@ namespace DatabaseAnalizer.Controllers.Databases
         {
             List<RelationFromDb> result = new List<RelationFromDb>();
 
-            var sCommand = @"SELECT 
-                                                 `TABLE_SCHEMA`,
-                                                 `TABLE_NAME`,
-                                                 `COLUMN_NAME`,
-                                                 `REFERENCED_TABLE_SCHEMA`,
-                                                 `REFERENCED_TABLE_NAME`,
-                                                 `REFERENCED_COLUMN_NAME`
-                                            FROM
-                                                 `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
-                                            WHERE
-                                                 `TABLE_SCHEMA` = '" + selectedDb + "' AND `REFERENCED_TABLE_NAME` IS NOT NULL;";
+            var sCommand = @"
+use " + selectedDb + @";
+SELECT f.name AS ForeignKey,
+OBJECT_NAME(f.parent_object_id) AS TABLE_NAME,
+COL_NAME(fc.parent_object_id,
+fc.parent_column_id) AS COLUMN_NAME,
+OBJECT_NAME (f.referenced_object_id) AS REFERENCED_TABLE_NAME,
+COL_NAME(fc.referenced_object_id,
+fc.referenced_column_id) AS REFERENCED_COLUMN_NAME
+FROM sys.foreign_keys AS f
+INNER JOIN sys.foreign_key_columns AS fc
+ON f.OBJECT_ID = fc.constraint_object_id
+";
 
 
             _connection.Open();// if there no mysql database here we are geting error so we can handle it with try catch
-            MySqlCommand command = _connection.CreateCommand();
+            SqlCommand command = _connection.CreateCommand();
             command.CommandText = sCommand;
-            MySqlDataReader tabs = command.ExecuteReader();
+            SqlDataReader tabs = command.ExecuteReader();
             while (tabs.Read())
             {
-                result.Add(new RelationFromDb()
-                {
-                    TableName = tabs.GetString("TABLE_NAME"),
-                    ColumnName = tabs.GetString("COLUMN_NAME"),
-                    ReferenceColumnName = tabs.GetString("REFERENCED_COLUMN_NAME"),
-                    ReferenceTableName = tabs.GetString("REFERENCED_TABLE_NAME")
-                });
+                if (tabs["TABLE_NAME"] != null &&
+                    tabs["COLUMN_NAME"] != null &&
+                    tabs["REFERENCED_COLUMN_NAME"] != null &&
+                    tabs["REFERENCED_TABLE_NAME"] != null)
+                    result.Add(new RelationFromDb()
+                    {
+                        TableName = tabs["TABLE_NAME"].ToString(),
+                        ColumnName = tabs["COLUMN_NAME"].ToString(),
+                        ReferenceColumnName = tabs["REFERENCED_COLUMN_NAME"].ToString(),
+                        ReferenceTableName = tabs["REFERENCED_TABLE_NAME"].ToString()
+                    });
             }
             _connection.Close();
 
 
             return result;
         }
-    }
-    public class Relation
-    {
-        public string TableFrom { set; get; }
-        public string TableTo { set; get; }
-        public string ColumnFrom { set; get; }
-        public string ColumnTo { set; get; }
-
-        public bool IsEqual(Relation newRel)
-        {
-            return ((ColumnTo == newRel.ColumnTo && ColumnFrom == newRel.ColumnFrom) ||
-                (ColumnFrom == newRel.ColumnTo && ColumnTo == newRel.ColumnFrom));
-        }
-
     }
 }
