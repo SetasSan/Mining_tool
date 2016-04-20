@@ -93,16 +93,29 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Helper\EnumHelper.cs" />
+    <Compile Include="Helper\Enums\CompareValue.cs" />
+    <Compile Include="Helper\Enums\DataTypes.cs" />
+    <Compile Include="Helper\ListExtensions.cs" />
     <Compile Include="Helper\TableArrow.cs" />
     <Compile Include="Models\AnalizedTable.cs" />
     <Compile Include="Models\ProcessTypes.cs" />
+    <Compile Include="Models\RelationFromDb.cs" />
     <Compile Include="Models\TableRelation.cs" />
+    <Compile Include="Views\Filter.xaml.cs">
+      <DependentUpon>Filter.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\TableArrow.cs" />
+    <Compile Include="Views\WindowClosedEventArgs.cs" />
     <Page Include="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\DBSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Filter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

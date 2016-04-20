@@ -9,6 +9,7 @@ namespace DatabaseAnalizer.Models
     public class TableRelation
     {
         public Table ForeignTable { set; get; }
+        public Table PrimaryTable { set; get; }
         public Column ForeignKey { set; get; }
         public Column PrimaryKey { set; get; }
     }

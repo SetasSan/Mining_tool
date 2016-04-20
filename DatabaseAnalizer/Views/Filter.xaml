@@ -1,0 +1,53 @@
+﻿<Window x:Class="DatabaseAnalizer.Views.Filter"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Filter" Height="365" Width="450" SizeToContent="WidthAndHeight" ResizeMode="NoResize" >
+    <Grid>
+        <Grid  Margin="20,20,20,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="200" />               
+                <RowDefinition Height="25" />
+                <RowDefinition Height="25" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="50" />
+            </Grid.ColumnDefinitions>
+            <DataGrid  ItemsSource="{Binding}" Grid.ColumnSpan="4" Grid.Row="0" Grid.Column="0" Name="Filter_conditions" RowHeight="25" SelectedItem="{Binding SelectedItem}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Width="*" Binding="{Binding Name}"/>
+                    <DataGridTextColumn Header="Cnd" ToolTipService.ToolTip="Condition" Width="50" Binding="{Binding Condition}"/>
+                    <DataGridTextColumn Header="Value" Width="150" Binding="{Binding Value}"/>
+                    <DataGridTemplateColumn Header="Action" Width="50">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate >
+                                <Button Content="X" Click="Delete"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <Grid  Grid.Row="1" Grid.ColumnSpan="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="50" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Row="1" Grid.Column="0" Name="ConditionBoxFields"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" Name="ConditionBox"/>
+                <TextBox Name="Condition_value" Grid.Row="1" Grid.Column="2"/>
+                <Button Grid.Row="1" Grid.Column="3" Content="Add" Click="AddFilterInBox" Height="25" VerticalAlignment="Top" />
+            </Grid>
+
+            <Button Grid.Row="4" Grid.Column="2" Content="Cancel" Click="Cancell_Click"/>
+            <Button Grid.Row="4" Grid.Column="0" Content="Clear"/>
+            <Button Grid.Row="4" Grid.Column="3" Content="Filter" Click="Filter_Clicked" />
+
+        </Grid>
+
+    </Grid>
+</Window>

@@ -1,11 +1,13 @@
 ﻿using DatabaseAnalizer.Controllers;
 using DatabaseAnalizer.Helper;
 using DatabaseAnalizer.Models;
+using DatabaseAnalizer.Views;
 using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.IO;
@@ -39,14 +41,26 @@ namespace DatabaseAnalizer
         private ListBox movingElement;
         private bool isDrawingLine = false;
         private TableArrow currentTableArrow;
-        private List<TableArrow> tableArrows = new List<TableArrow>();
+        public List<TableArrow> tableArrows = new List<TableArrow>();
         private List<ComboBoxValues> ColumnNames { set; get; }
+        private Filter filter;
+        private Models.Table selectedTable { set; get; }
+        private Models.Table joinedTable { set; get; }
+        private List<ConditionSetting> Filters { set; get; }
 
         public MainWindow(Controller controller)
         {
+            filter = new Filter(this);
             InitializeComponent();
             _controller = controller;
             CreateParametersTable();
+            this.Closing += CloseMainWindow;
+
+        }
+
+        private void CloseMainWindow(object sender, CancelEventArgs e)
+        {
+            filter.Close();
         }
 
         private void CreateParametersTable()
@@ -81,9 +95,9 @@ namespace DatabaseAnalizer
             {
                 SaveFileDialog saveFileDialog = new SaveFileDialog();
                 saveFileDialog.Filter = "XES file|*.xes";
-                saveFileDialog.Title = "Save an XES file";                
+                saveFileDialog.Title = "Save an XES file";
                 saveFileDialog.FileName = _controller.SelectedDb + DateTime.Now.ToString("yyyy-mm-dd-HH-mm-ss") + ".xes";
-                if (saveFileDialog.ShowDialog()==true)
+                if (saveFileDialog.ShowDialog() == true)
                 {
                     StreamWriter writer = new StreamWriter(saveFileDialog.OpenFile());
                     writer.WriteLine(_controller.getXESString());
@@ -163,79 +177,67 @@ namespace DatabaseAnalizer
             FillDataTable(table, table_data);
         }
 
-        public void FillGeneratedDataTable(Models.AnalizedTable table)
+        public void FillGeneratedDataTable(Models.Table table)
         {
-            FillDataTable(table, geberated_table_data);
+            joinedTable = table;
+            generated_table_data.Columns.Clear();
+            FillDataTable(table, generated_table_data);
         }
 
         private void FillDataTable(Models.Table table, DataGrid grid)
         {
+            selectedTable = table;
             table_data.Columns.Clear();
             DataTable dt = new DataTable();
+            grid.IsReadOnly = true;
+            grid.AutoGenerateColumns = false;
 
-            foreach (Column col in table.Columns)
+            foreach (Column column in table.Columns)
             {
-                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
+                // DataColumn dc = new DataColumn(column.Name.Replace("_", "__"), typeof(string));
+                // dt.Columns.Add(dc);
+
+                DataGridTextColumn col = new DataGridTextColumn();
+                col.Binding = new Binding(column.Name.Replace(".", ""));
+                var spHeader = new StackPanel() { Orientation = Orientation.Horizontal };
+                spHeader.Children.Add(new Label() { Content = column.Name.Replace("_", "__") });
+                //var button = new Button();
+
+                //button.Click +=  (s, er) => { HandlelistFilterButtonClick(column, s); };
+                //button.Content = "Filter";
+                //spHeader.Children.Add(button);
+                col.Header = spHeader;
+                grid.Columns.Add(col);
+            }
+
+            foreach (Column column in table.Columns)
+            {
+                DataColumn dc = new DataColumn(column.Name.Replace(".", ""), typeof(string));
                 dt.Columns.Add(dc);
             }
 
-            for (int i = 0; i < table.Columns.ElementAt(0).CellsData.Count(); i++)
-            {
-                DataRow dr = dt.NewRow();
-                int e = 0;
-                foreach (object l in table.Columns)
-                {
-                    dr[e] = table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();
-                    e++;
-                }
-                dt.Rows.Add(dr);
-            }
-
-            DataView dw = new DataView(dt);
-            grid.ItemsSource = dw;
-            PrintLog("filled table - " + table.Name);
-
-        }
-
-        private void FillDataTable(Models.AnalizedTable analizetable, DataGrid grid)
-        {
-            table_data.Columns.Clear();
-            DataTable dt = new DataTable();
-
-            //foreach (var header in analizetable.Header)
-            //{
-            //    DataColumn dc = new DataColumn(header.Key);               
-            //    dt.Columns.Add(dc);
-            //    for (int i = 0; i < header.Value - 1; i++ )
-            //        dt.Columns.Add(new DataColumn());
-            //}
-
-            foreach (Column col in analizetable.table.Columns)
-            {
-                DataColumn dc = new DataColumn(col.Name.Replace("_", "__"), typeof(string));
-                dt.Columns.Add(dc);
-            }
-
-            if (analizetable.table.Columns.ElementAt(0).CellsData != null)
-                for (int i = 0; i < analizetable.table.Columns.ElementAt(0).CellsData.Count(); i++)
+            if (table.Columns.First().CellsData != null)
+                for (int i = 0; i < table.Columns.Select(s => s.CellsData.Count()).Max(); i++)
                 {
                     DataRow dr = dt.NewRow();
                     int e = 0;
-                    foreach (object l in analizetable.table.Columns)
+                    foreach (object l in table.Columns)
                     {
-                        if (analizetable.table.Columns.ElementAt(e).CellsData.Count() > i)
-                            dr[e] = analizetable.table.Columns.ElementAt(e).CellsData.ElementAt(i).ToString();
+                        if (table.Columns.ElementAt(e).CellsData.Count() > i)
+                            dr[e] = table.Columns.ElementAt(e).CellsData.ElementAt(i).Value != "" ? table.Columns.ElementAt(e).CellsData.ElementAt(i).Value.ToString() : "null";
                         else
                             dr[e] = "-";
                         e++;
                     }
                     dt.Rows.Add(dr);
+
                 }
 
             DataView dw = new DataView(dt);
             grid.ItemsSource = dw;
-            PrintLog("filled table - " + analizetable.table.Name);
+            PrintLog("filled table - " + table.Name);
         }
+
 
         public void PrintLog(String log)
         {
@@ -330,7 +332,7 @@ namespace DatabaseAnalizer
             PrintLog("dragging droping  - " + sender.ToString() + " " + e.ToString());
         }
 
-        private void makeMainTable_PreviewMouseLeftButtonDown(DatabaseAnalizer.Models.Table table, Label sender)
+        public void makeMainTable_PreviewMouseLeftButtonDown(DatabaseAnalizer.Models.Table table, Label sender)
         {
             ListBox lb = sender.Parent as ListBox;
             Canvas mainCanvas = lb.Parent as Canvas;
@@ -391,7 +393,7 @@ namespace DatabaseAnalizer
             isElementMoving = false;
         }
 
-        private void HandlelistBoxClick(DatabaseAnalizer.Models.Table table, Column col, object s)
+        public void HandlelistBoxClick(DatabaseAnalizer.Models.Table table, Column col, object s)
         {
             PrintLog("clicked from - " + table.Name + " and col - " + col.Name);
             if (!this.isDrawingLine)
@@ -488,11 +490,10 @@ namespace DatabaseAnalizer
         /// <param name="table"></param>
         public void HandleMouseDown(DatabaseAnalizer.Models.Table table)
         {
+            _controller.ExtractData(table.Name);
             PrintLog("Selected table - " + table.Name);
             ShowTableParametres(table);
             FillDataTable(table);
-
-
             dragingTable = table;
             PrintLog("start dragging - " + table.Name);
         }
@@ -529,21 +530,21 @@ namespace DatabaseAnalizer
 
         private void Generate_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            _controller.AnalizeData();
+            _controller.AnalizeData(Filters);
         }
 
         private void Analize_Click(object sender, RoutedEventArgs e)
         {
             if (_controller.ExistMainTable())
-                _controller.AnalizeData();
+                _controller.AnalizeData(Filters);
             else
                 PrintLog("No main table selected");
         }
 
-        public void AddLogSettings(AnalizedTable analized)
+        public void AddLogSettings(Models.Table analized)
         {
             ColumnNames = new List<ComboBoxValues>();
-            foreach (var item in analized.table.Columns.Select(s => s.Name))
+            foreach (var item in analized.Columns.Select(s => s.Name))
             {
                 ComboBoxValues cbv = new ComboBoxValues() { Name = item };
                 cbv.Types = new ObservableCollection<ProcessTypes>();
@@ -575,5 +576,137 @@ namespace DatabaseAnalizer
         {
             geberated_table_log.Text = _controller.GetGeneratedLog();
         }
+
+        private void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {
+            if (e.PropertyName.Contains('.') && e.Column is DataGridBoundColumn)
+            {
+                DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
+                dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
+            }
+        }
+
+        private void OpenFilterClick(object sender, RoutedEventArgs e)
+        {
+
+            if (joinedTable != null && joinedTable.Columns.Any())
+            {
+                filter.Owner = this;
+                filter.Columns = new List<Column>();
+                filter.Columns.AddRange(joinedTable.Columns);
+                filter.FillFilter();
+                filter.ShowDialog();
+            }
+
+            else
+                PrintLog("No table analized");
+
+        }
+
+
+        internal void Filter(List<ConditionSetting> AddedFilters)
+        {
+            Filters = AddedFilters;
+            _controller.AnalizeData(Filters);
+        }
+
+        private void Find_relations_from_schema_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.CreateRelationsByDb();
+        }
+
+        public ArrowElements MakeArrowElemets(RelationFromDb relation)
+        {
+
+            ArrowElements arrowElements = new ArrowElements();
+            arrowElements.line = new Line();
+            arrowElements.line.Stroke = System.Windows.Media.Brushes.LightSteelBlue;
+            arrowElements.line.StrokeThickness = 2;
+
+
+            bool foundEnd = false;
+
+            foreach (var item in Relation_Canvas.Children)
+            {
+
+                if (item.GetType() == typeof(ListBox) && ((ListBox)item).Name == relation.TableName)
+                {
+                    var listBox = ((ListBox)item);
+                    foreach (var columnsListBox in listBox.Items)//canvase esantis pagrindinis listboxas
+                    {
+                        if (columnsListBox.GetType() == typeof(ListBox))
+                        {
+                            int i = 0;
+                            foreach (var colInTableList in ((ListBox)columnsListBox).Items)
+                            {//lenteleje esantis headeris ir listboxas
+                                i++;
+                                if (((Label)colInTableList).Content.ToString() == relation.ColumnName)
+                                {
+                                    var label = (Label)colInTableList;
+                                    UIElement container = VisualTreeHelper.GetParent(listBox) as UIElement;
+                                    Point relativeLocation = listBox.TranslatePoint(new Point(0, 0), container);
+                                    arrowElements.line.X1 = relativeLocation.X+20;
+                                    arrowElements.line.Y1 = relativeLocation.Y+i*30+7;
+                                    arrowElements.startMovableElement = listBox;
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+
+                if (item.GetType() == typeof(ListBox) && ((ListBox)item).Name == relation.ReferenceTableName)
+                {
+                    var listBox = ((ListBox)item);
+                    Label mainTableLabel = null;
+                    foreach (var columnsListBox in listBox.Items)//canvase esantis pagrindinis listboxas
+                    {
+                        if (columnsListBox.GetType() == typeof(Label))
+                        {
+                            mainTableLabel = (Label)columnsListBox;
+                        }
+                        if (columnsListBox.GetType() == typeof(ListBox))
+                        {
+                            int i = 0;
+                            foreach (var colInTableList in ((ListBox)columnsListBox).Items)
+                            {//lenteleje esantis headeris ir listboxas
+                                if (((Label)colInTableList).Content.ToString() == relation.ReferenceColumnName)
+                                {
+                                    i++;
+                                    var label = (Label)colInTableList;
+                                    UIElement container = VisualTreeHelper.GetParent(listBox) as UIElement;
+                                    Point relativeLocation = listBox.TranslatePoint(new Point(0, 0), container);
+                                    arrowElements.line.X2 = relativeLocation.X + 20;
+                                    arrowElements.line.Y2 = relativeLocation.Y + i * 30+15;
+                                    arrowElements.endMovableElement = listBox;
+                                    arrowElements.tableLabel = mainTableLabel;
+                                    foundEnd = true;
+
+
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+
+            if (!foundEnd)
+                return null;
+
+            Relation_Canvas.Children.Add(arrowElements.line);
+            return arrowElements;
+        }
+    }
+
+    public class ArrowElements
+    {
+        public Line line { set; get; }
+        public ListBox startMovableElement { set; get; }
+        public ListBox endMovableElement { set; get; }
+        public Label tableLabel { set; get; }
     }
 }
