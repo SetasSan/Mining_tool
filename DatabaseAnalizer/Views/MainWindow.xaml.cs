@@ -47,14 +47,25 @@ namespace DatabaseAnalizer
         private Models.Table selectedTable { set; get; }
         private Models.Table joinedTable { set; get; }
         private List<ConditionSetting> Filters { set; get; }
+        BackgroundWorker backgoundWorker { set; get; }
 
         public MainWindow(Controller controller)
         {
+
             filter = new Filter(this);
             InitializeComponent();
             _controller = controller;
             CreateParametersTable();
             this.Closing += CloseMainWindow;
+
+            Loader.Maximum = 100;
+            backgoundWorker = new BackgroundWorker();
+            backgoundWorker.DoWork += new DoWorkEventHandler(bw_DoWork);
+            backgoundWorker.ProgressChanged += new ProgressChangedEventHandler(bw_ProgressChanged);
+            backgoundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
+
+            backgoundWorker.WorkerSupportsCancellation = true;
+            backgoundWorker.WorkerReportsProgress = true;
 
         }
 
@@ -131,7 +142,7 @@ namespace DatabaseAnalizer
                 newButton.PreviewMouseDown += (s, e) => { HandleMouseDown(table); };
                 newButton.PreviewMouseDown += newButton_MouseDown;
                 newButton.Name = table.Name.Substring(table.Name.IndexOf('.') + 1) + "_btn";
-                newButton.Content = table.Name;                
+                newButton.Content = table.Name;
                 newButton.Height = 50;
                 ButtonsPanel.Children.Add(newButton);
             }
@@ -174,32 +185,57 @@ namespace DatabaseAnalizer
 
         public void FillDataTable(Models.Table table)
         {
-            FillDataTable(table, table_data);
+            if (!backgoundWorker.IsBusy)
+            {
+                table_data.Columns.Clear();
+                backgoundWorker.RunWorkerAsync(new WorkerTables()
+                {
+                    table = table,
+                    grid = table_data
+                });
+            }
         }
 
         public void FillGeneratedDataTable(Models.Table table)
         {
-            joinedTable = table;
-            generated_table_data.Columns.Clear();
-            FillDataTable(table, generated_table_data);
+            if (!backgoundWorker.IsBusy)
+            {
+                joinedTable = table;
+                generated_table_data.Columns.Clear();
+                table_data.Columns.Clear();
+
+                backgoundWorker.RunWorkerAsync(new WorkerTables()
+                {
+                    table = table,
+                    grid = generated_table_data
+                });
+            }
         }
 
-        private void FillDataTable(Models.Table table, DataGrid grid)
+        private DataGrid FillDataTable(Models.Table table, DataGrid grid, BackgroundWorker worker)
         {
             selectedTable = table;
-            table_data.Columns.Clear();
             DataTable dt = new DataTable();
-            grid.IsReadOnly = true;
-            grid.AutoGenerateColumns = false;
+            this.Dispatcher.Invoke((Action)(() =>
+    {
+        grid.IsReadOnly = true;
+        grid.AutoGenerateColumns = false;
+    }));
+
 
             foreach (Column column in table.Columns)
             {
-                DataGridTextColumn col = new DataGridTextColumn();
-                col.Binding = new Binding(column.Name.Replace(".", ""));
-                var spHeader = new StackPanel() { Orientation = Orientation.Horizontal };
-                spHeader.Children.Add(new Label() { Content = column.Name.Replace("_", "__") });
-                col.Header = spHeader;
-                grid.Columns.Add(col);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    DataGridTextColumn col = new DataGridTextColumn();
+                    col.Binding = new Binding(column.Name.Replace(".", ""));
+                    var spHeader = new StackPanel() { Orientation = Orientation.Horizontal };
+                    spHeader.Children.Add(new Label() { Content = column.Name.Replace("_", "__") });
+                    col.Header = spHeader;
+
+                    grid.Columns.Add(col);
+                }));
+
             }
 
             foreach (Column column in table.Columns)
@@ -207,7 +243,7 @@ namespace DatabaseAnalizer
                 DataColumn dc = new DataColumn(column.Name.Replace(".", ""), typeof(string));
                 dt.Columns.Add(dc);
             }
-            Loader.Maximum = table.Columns.First().CellsData.Count();
+
             if (table.Columns.First().CellsData != null)
                 for (int i = 0; i < table.Columns.Select(s => s.CellsData.Count()).Max(); i++)
                 {
@@ -221,13 +257,26 @@ namespace DatabaseAnalizer
                             dr[e] = "-";
                         e++;
                     }
-                    Loader.Value = dt.Rows.Count;
                     dt.Rows.Add(dr);
 
+                    if ((worker.CancellationPending == true))
+                    {
+                        worker.CancelAsync();
+                        break;
+                    }
+                    double v1 = table.Columns.Select(s => s.CellsData.Count()).Max();
+                    double v2 = dt.Rows.Count;
+                    int v3 = (int)(100 / v1 * v2);
+                    worker.ReportProgress(v3);
                 }
 
             DataView dw = new DataView(dt);
-            grid.ItemsSource = dw;
+            this.Dispatcher.Invoke((Action)(() =>
+            {
+                grid.ItemsSource = dw;
+            }));
+
+            return grid;
         }
 
 
@@ -331,7 +380,7 @@ namespace DatabaseAnalizer
         private void removeTableFromCanvas_CLick(Models.Table tempTable, Label header)
         {
             string tableName = header.Content.ToString();
-            
+
 
             ListBox listBoxForRemove = null;
             foreach (var canItem in Relation_Canvas.Children)
@@ -351,7 +400,7 @@ namespace DatabaseAnalizer
 
             //remove arrows
             var tableArrowsForRemoving = tableArrows.Where(s => s.endMovableElement.Name == header.Content.ToString().Substring(header.Content.ToString().IndexOf('.') + 1) || s.startMovableElement.Name == header.Content.ToString().Substring(header.Content.ToString().IndexOf('.') + 1)).ToList();
-        
+
             foreach (var arrow in tableArrowsForRemoving)
             {
                 tableArrows.Remove(arrow);
@@ -725,11 +774,70 @@ namespace DatabaseAnalizer
 
             if (!foundEnd)
                 return null;
-            
+
             Relation_Canvas.Children.Add(arrowElements.line);
             return arrowElements;
         }
-  
+
+
+        //------------background worker-------------------//
+        private void bw_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            WorkerTables data = (WorkerTables)e.Argument;
+
+          
+
+            this.Dispatcher.Invoke((Action)(() =>
+            {
+                this.tbProgress.Content = "";
+                Loader.Value = 0;
+            }));
+
+             FillDataTable(data.table, data.grid, worker);
+            
+
+        }
+
+        private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if ((e.Cancelled == true))
+            {
+                this.tbProgress.Content = "Canceled!";
+            }
+
+            else if (!(e.Error == null))
+            {
+                this.tbProgress.Content = ("Error: " + e.Error.Message);
+            }
+
+            else
+            {
+                this.tbProgress.Content = "Done!";
+            }
+        }
+
+        private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            Loader.Value = e.ProgressPercentage;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.backgoundWorker.WorkerSupportsCancellation == true)
+            {
+                backgoundWorker.CancelAsync();
+            }
+
+        }
+
+    }
+
+    public class WorkerTables
+    {
+        public Models.Table table { set; get; }
+        public DataGrid grid { set; get; }
     }
 
     public class ArrowElements

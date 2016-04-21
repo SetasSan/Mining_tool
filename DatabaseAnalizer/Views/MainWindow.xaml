@@ -89,9 +89,12 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <StackPanel Margin="220,746,10,0" HorizontalAlignment="Left">
-            <ProgressBar x:Name="Loader" Height="30" Width="200px" Margin="0, 0" OpacityMask="Black" />
+        <StackPanel Margin="220,0,332,0" Height="40" VerticalAlignment="Bottom" Orientation="Horizontal">
+            <ProgressBar x:Name="Loader" Height="26" Width="200px"  OpacityMask="Black" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            <Button Width="140" Margin="0,14,0,0" Content="Cancell" Click="Button_Click" />
+            <Label x:Name="tbProgress" Content="" HorizontalAlignment="Left"  Width="141" Margin="0,10,0,0"/>
         </StackPanel>
+
 
     </Grid>
 </Window>

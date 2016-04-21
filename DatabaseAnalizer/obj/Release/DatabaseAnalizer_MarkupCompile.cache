@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\obj\Release\
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\
 DatabaseAnalizer
 none
 false
 TRACE
-D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\App.xaml
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\App.xaml
 4561324188
 
 33-2036178867
-221135790644
+22-1618958506
 Themes\Generic.xaml;Views\DBSettingsWindow.xaml;Views\Filter.xaml;Views\MainWindow.xaml;
 
 False
