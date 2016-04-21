@@ -15,7 +15,7 @@
             <MenuItem Header="_About"/>
             <WrapPanel Height="100" Width="100"/>
         </Menu>
-        <TextBox x:Name="data_displayer" Margin="169,0,332,40" TextWrapping="Wrap" Text="" Height="170" VerticalAlignment="Bottom" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        <TextBox x:Name="data_displayer" Margin="220,0,332,40" TextWrapping="Wrap" Text="" Height="170" VerticalAlignment="Bottom" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
 
         <ToolBar Height="28" Margin="0,31,10,0" VerticalAlignment="Top">
@@ -26,10 +26,10 @@
             <Button Content="Filter" Height="23" VerticalAlignment="Top" Width="80" Click="OpenFilterClick"/>
             <Button Content="Generate Log" Height="23" VerticalAlignment="Top" Width="80" Click="GenerateLog_Click"/>
         </ToolBar>
-        <ScrollViewer Margin="10,64,0,45" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Width="154">
-            <StackPanel x:Name="ButtonsPanel"  HorizontalAlignment="Left" Width="133"/>
+        <ScrollViewer Margin="10,64,0,45" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Width="200">
+            <StackPanel x:Name="ButtonsPanel"  HorizontalAlignment="Left" Width="200"/>
         </ScrollViewer>
-        <TabControl x:Name="tab_main" Margin="169,59,332,210">
+        <TabControl x:Name="tab_main" Margin="220,59,332,210">
             <TabItem x:Name="tab_table_data" Header="Table data">
                 <Grid Background="#FFE5E5E5" Margin="0,0,1,0">
                     <DataGrid x:Name="table_data" />
@@ -89,6 +89,9 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <StackPanel Margin="220,746,10,0" HorizontalAlignment="Left">
+            <ProgressBar x:Name="Loader" Height="30" Width="200px" Margin="0, 0" OpacityMask="Black" />
+        </StackPanel>
 
     </Grid>
 </Window>

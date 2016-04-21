@@ -130,8 +130,8 @@ namespace DatabaseAnalizer
                 Button newButton = new Button();
                 newButton.PreviewMouseDown += (s, e) => { HandleMouseDown(table); };
                 newButton.PreviewMouseDown += newButton_MouseDown;
-                newButton.Name = table.Name + "_btn";
-                newButton.Content = table.Name;
+                newButton.Name = table.Name.Substring(table.Name.IndexOf('.') + 1) + "_btn";
+                newButton.Content = table.Name;                
                 newButton.Height = 50;
                 ButtonsPanel.Children.Add(newButton);
             }
@@ -207,7 +207,7 @@ namespace DatabaseAnalizer
                 DataColumn dc = new DataColumn(column.Name.Replace(".", ""), typeof(string));
                 dt.Columns.Add(dc);
             }
-
+            Loader.Maximum = table.Columns.First().CellsData.Count();
             if (table.Columns.First().CellsData != null)
                 for (int i = 0; i < table.Columns.Select(s => s.CellsData.Count()).Max(); i++)
                 {
@@ -221,6 +221,7 @@ namespace DatabaseAnalizer
                             dr[e] = "-";
                         e++;
                     }
+                    Loader.Value = dt.Rows.Count;
                     dt.Rows.Add(dr);
 
                 }
@@ -289,7 +290,7 @@ namespace DatabaseAnalizer
             //table header
             Label header = new Label()
             {
-                Name = dragingTable.Name,
+                Name = dragingTable.Name.Substring(dragingTable.Name.IndexOf('.') + 1),
                 Content = dragingTable.Name.Replace("_", "__"),
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(System.Drawing.Color.Gray.A, System.Drawing.Color.Gray.R, System.Drawing.Color.Gray.G, System.Drawing.Color.Gray.B)),
                 Width = charcount * charsize - charsize
@@ -313,7 +314,7 @@ namespace DatabaseAnalizer
             tableHeaderMeniu.Items.Add(makeMainTable);
             tableHeaderMeniu.Items.Add(removeTable);
             header.ContextMenu = tableHeaderMeniu;
-            mainItem.Name = dragingTable.Name;
+            mainItem.Name = dragingTable.Name.Substring(dragingTable.Name.IndexOf('.') + 1);
 
             mainItem.Items.Add(header);
 
@@ -335,7 +336,7 @@ namespace DatabaseAnalizer
             ListBox listBoxForRemove = null;
             foreach (var canItem in Relation_Canvas.Children)
             {
-                if (canItem.GetType() == typeof(ListBox) && ((ListBox)canItem).Name == header.Content.ToString())
+                if (canItem.GetType() == typeof(ListBox) && ((ListBox)canItem).Name == header.Content.ToString().Substring(header.Content.ToString().IndexOf('.') + 1))
                 {
                     listBoxForRemove = canItem as ListBox;
 
@@ -349,7 +350,7 @@ namespace DatabaseAnalizer
                 Relation_Canvas.Children.Remove(listBoxForRemove);
 
             //remove arrows
-            var tableArrowsForRemoving = tableArrows.Where(s => s.endMovableElement.Name == header.Content.ToString() || s.startMovableElement.Name == header.Content.ToString()).ToList();
+            var tableArrowsForRemoving = tableArrows.Where(s => s.endMovableElement.Name == header.Content.ToString().Substring(header.Content.ToString().IndexOf('.') + 1) || s.startMovableElement.Name == header.Content.ToString().Substring(header.Content.ToString().IndexOf('.') + 1)).ToList();
         
             foreach (var arrow in tableArrowsForRemoving)
             {
@@ -724,10 +725,11 @@ namespace DatabaseAnalizer
 
             if (!foundEnd)
                 return null;
-
+            
             Relation_Canvas.Children.Add(arrowElements.line);
             return arrowElements;
         }
+  
     }
 
     public class ArrowElements

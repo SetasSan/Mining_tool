@@ -75,7 +75,7 @@ namespace DatabaseAnalizer.Controllers.Servers
                     List<Column> columns = new List<Column>();
                     _connection.Open();
                     SqlCommand command = _connection.CreateCommand();
-                    command.CommandText = "select COLUMN_NAME, DATA_TYPE from " + db.GetDBName() + ".information_schema.COLUMNS WHERE TABLE_NAME= '" + table.Name + "';";
+                    command.CommandText = "select COLUMN_NAME, DATA_TYPE from " + db.GetDBName() + ".information_schema.COLUMNS WHERE TABLE_NAME= '" + (table.Name.Contains('.') ? table.Name.Substring(table.Name.IndexOf('.') + 1) : "") + "';";
                     SqlDataReader tabs = command.ExecuteReader();
                     while (tabs.Read())
                     {
@@ -103,7 +103,7 @@ namespace DatabaseAnalizer.Controllers.Servers
 
         private IEnumerable<string> GetTablesNamesForDb(string dbName)
         {
-            return ExecuteSqlCommand("SELECT TABLE_NAME FROM " + dbName + ".INFORMATION_SCHEMA.Tables;");
+            return ExecuteSqlCommand("SELECT (CAST(TABLE_SCHEMA AS varchar(32)) + '.' +CAST(TABLE_NAME AS varchar(32))) AS TABLE_NAME FROM " + dbName + ".INFORMATION_SCHEMA.Tables;");           
 
         }
 
@@ -119,7 +119,7 @@ namespace DatabaseAnalizer.Controllers.Servers
                         Dictionary<int, string> cellsData = new Dictionary<int, string>();
                         _connection.Open();
                         SqlCommand command = _connection.CreateCommand();
-                        command.CommandText = "USE " + db.GetDBName() + "; select " + column.Name + " from " + table.Name;
+                        command.CommandText = "USE " + db.GetDBName() + "; select [" + column.Name + "] from " + table.Name;
                         SqlDataReader cells = command.ExecuteReader();
 
                         int i = 0;
