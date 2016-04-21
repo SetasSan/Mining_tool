@@ -70,3 +70,4 @@ D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\obj\Release\Themes\
 D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.g.resources
 D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnalizer.Properties.Resources.resources
 D:\Magistrinis\DataJoinerSource\Mining_tool\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csproj.GenerateResource.Cache
+E:\VisualStudioProjects\DatabaseAnalizer\DatabaseAnalizer\obj\Release\DatabaseAnaliser.csprojResolveAssemblyReference.cache
